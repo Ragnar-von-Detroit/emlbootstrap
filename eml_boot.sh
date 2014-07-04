@@ -38,7 +38,7 @@ install_xcode(){
       [ "$osx_vers" -eq 8 ] && dmgurl=http://devimages.apple.com/downloads/xcode/command_line_tools_for_osx_mountain_lion_april_2014.dmg
       toolspath="/tmp/clitools.dmg"
       /usr/bin/curl "$dmgurl" -o "$toolspath"
-      tmpmount=`/usr/bin/mktemp -d /tmp/clitools.xxxx`
+      tmpmount=$(/usr/bin/mktemp -d /tmp/clitools.xxxx)
       /usr/bin/hdiutil attach "$toolspath" -mountpoint "$tmpmount"
       /usr/sbin/installer -pkg "$(find $tmpmount -name '*.mpkg')" -target /
       /usr/bin/hdiutil detach "$tmpmount"
@@ -47,7 +47,7 @@ install_xcode(){
     fi
   }
 
-  # build array of most probable receipts from cli tools for current & past os versions, partially from
+  # Build array of most probable receipts from cli tools for current & past OS versions, partially from
   # https://github.com/homebrew/homebrew/blob/208f963cf2/library/homebrew/os/mac/xcode.rb#l147-l150
   declare -ra bundle_ids=('com.apple.pkg.DeveloperToolsCLI' \
   'com.apple.pkg.DeveloperToolsCLILeo' 'com.apple.pkg.CLTools_Executables' \
@@ -58,7 +58,7 @@ install_xcode(){
   for id in ${bundle_ids[@]}; do
     /usr/sbin/pkgutil --pkg-info=$id > /dev/null 2>&1
     if [[ $? == 0 ]]; then
-      echo "Found "$id", xcode developer cli tools install not needed"
+      echo "Found "$id", Xcode Developer CLI Tools install not needed"
       echo ""
       echo ""
       ((xcode_cli++))
@@ -67,13 +67,13 @@ install_xcode(){
   done
 
   if [[ $xcode_cli -ne 1 ]]; then
-    echo "xcode tools installation"
+    echo "Xcode Tools installation"
     echo "------------------------"
     echo ""
-    echo "please wait while xcode is installed"
+    echo "Please wait while xcode is installed"
     dev_tools
     if [[ $? -ne 0 ]]; then
-      echo "xcode installation failed" && exit 1
+      echo "Xcode installation failed" && exit 1
     fi
     echo ""
     echo ""
@@ -94,6 +94,28 @@ install_cask() {
   #This way we can ensure the all gui programs are accessible for all users, including our standard accounts.
   echo "Changing default Cask symlink location to /Applications"
   echo "export HOMEBREW_CASK_OPTS="--appdir=/Applications"" >> ~/.bash_profile
+}
+
+#Turn on Remote Desktop control with full access for Admin account only.
+setup_ARD() {
+  printf "%s\n" "Setting up ARD access for "$USER"."
+  sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+  -activate \
+  -configure \
+  -access -on \
+  -users "$USER" \
+  -privs -all \
+  -restart -agent
+}
+
+#Use systemsetup to turn on SSH access first (turns on the option is System Preferences),
+#then we edit sshd_config + make authorized keys for the admin user only.
+#We don't need to check if these are running, the commands check for themselves
+#and print out whether remotelogin is on or off.
+setup_SSHlogin() {
+  printf "\n%s\n" "Turning on SSH login in System Preferences."
+  sudo /usr/sbin/systemsetup -setremotelogin On
+  sudo /usr/sbin/systemsetup -getremotelogin
 }
 
 configure_SSHD() {
@@ -138,7 +160,7 @@ create_users() {
   #createuser wants $1 USERNAME, $2 UNIQUEID, $3 USERPICTURE
   create_user(){
     local userpath=/Users/"$1"
-    #Conver first letter of username to Uppercase to seem more profesh (eg. Instructor) 
+    #Conver first letter of username to Uppercase to seem more profesh (eg. Instructor)
     local realnameupper=$(echo "$1" | /usr/bin/perl -pe 's/\S+/\u$&/g')
     sudo /usr/bin/dscl . -create "$userpath"
     sudo /usr/bin/dscl . -create "$userpath" UserShell /bin/bash
@@ -185,6 +207,8 @@ main() {
   install_xcode
   install_homebrew
   install_cask
+  setup_ARD
+  setup_SSHlogin
   configure_SSHD
   install_pubkey
   configure_dock
