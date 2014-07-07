@@ -1,10 +1,14 @@
 emlbootstrap
 ============
 
-Fresh install configuration for EML computers.  
+**Fresh install and update configuration for EML computers.**  
 
 Todo:
-1. Write SecurityBanner.txt
-2. Write Security Banner install script
-3. Write usage policy alert in applescript
-4. Write install script and login item for usage policy
+- [ ] Write SecurityBanner.txt
+- [ ] Write Security Banner install script
+- [ ] Write usage policy alert in applescript
+- [ ] Write install script and login item for usage policy
+- [ ] Ansible playbooks for
+  - [ ] Default/Minimal install
+  - [ ] Dockutil (wait until it's in brew: https://github.com/Homebrew/homebrew/pull/29136)
+  - [ ] Other system configurations + updates

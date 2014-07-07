@@ -207,7 +207,7 @@ create_users() {
     local index="$i"
     local uniqueid="$((lastid + index + 1))" #+1 to not overwrite the LASTID on the 0 index of the array.
     local username="${defusers[$i]}"
-    local userpicture="${userpictures[$i]}"
+    local userpicture="${userpictures[$i]}"S
     #Don't create Student and Instructor accounts if they already exist. Warning! We only check for
     #Users in standard OSX location /Users/!
     if [[ $(/usr/bin/dscl . list /Users | grep -ci "$username") -eq 0 ]]; then
