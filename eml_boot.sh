@@ -15,6 +15,9 @@ intro() {
 
   This script needs to be run as EML Admin. It will provision the computer for you so that it is ready for Ansible management
   from the EML Tech machine.
+
+  You will need to reboot after this script is finished.
+
 EOF
 }
 
@@ -96,9 +99,30 @@ install_cask() {
   echo "export HOMEBREW_CASK_OPTS="--appdir=/Applications"" >> ~/.bash_profile
 }
 
-#Turn on Remote Desktop control with full access for Admin account only.
+configure_schedule_and_netwake() {
+  #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
+  sudo pmset repeat wakeorpoweron "weekdays" "09:00:00" shutdown "weekdays" "20:00:00"
+  sudo pmset displaysleep 5 disksleep 120 sleep 30 womp 1 autorestart 1 networkoversleep 1 ring 1
+  sudo systemsetup -setwakeonnetworkaccess on
+}
+
+configure_sleep_security() {
+  defaults write com.apple.screensaver askForPassword 1
+  defaults write com.apple.screensaver askForPasswordDelay -int 5
+}
+
+configure_login_window() {
+  sudo defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
+  "Welcome to the DEFT Media Lab. Login information is available on the white board or \
+  from the EML Technician. You will be asked to agree to Media Lab policies once you have logged in."
+  sudo defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
+  sudo defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
+  sudo defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
+}
+
 setup_ARD() {
   printf "%s\n" "Setting up ARD access for "$USER"."
+  #Turn on Remote Desktop control with full access for Admin account only.
   sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
   -activate \
   -configure \
@@ -158,9 +182,9 @@ create_users() {
   declare -ar userpictures=("/Library/User Pictures/Sports/Golf.tif" "/Library/User Pictures/Fun/Medal.tif" "/Library/User Pictures/Flowers/Red Rose.tif")
 
   #createuser wants $1 USERNAME, $2 UNIQUEID, $3 USERPICTURE
-  create_user(){
+  create_user() {
     local userpath=/Users/"$1"
-    #Conver first letter of username to Uppercase to seem more profesh (eg. Instructor)
+    #Convert first letter of username to Uppercase. This is just for Real Name key, which is what shows up on login screen. (eg. Instructor)
     local realnameupper=$(echo "$1" | /usr/bin/perl -pe 's/\S+/\u$&/g')
     sudo /usr/bin/dscl . -create "$userpath"
     sudo /usr/bin/dscl . -create "$userpath" UserShell /bin/bash
@@ -207,11 +231,16 @@ main() {
   install_xcode
   install_homebrew
   install_cask
+  configure_schedule_and_netwake
+  configure_sleep_security
+  configure_login_window
   setup_ARD
   setup_SSHlogin
   configure_SSHD
   install_pubkey
   configure_dock
   create_users
+
+  printf "%s\n" "DONE-SO! HEY LISTEN, YOU SHOULD REBOOT THE COMPUTER NOW. REALLY."
 }
 main
