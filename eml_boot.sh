@@ -85,14 +85,14 @@ install_xcode(){
 
 install_homebrew() {
   echo "Installing Homebrew. Follow the prompts."
-  ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+  /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
   echo "Fixing Brew path"
   echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile
 }
 
 install_cask() {
   echo "Installing Cask"
-  brew install caskroom/cask/brew-cask
+  /usr/local/bin/brew install caskroom/cask/brew-cask
   #fix brew path and make sure Cask symlinks to /Applications rather than ~/Applications.
   #This way we can ensure the all gui programs are accessible for all users, including our standard accounts.
   echo "Changing default Cask symlink location to /Applications"
@@ -101,23 +101,23 @@ install_cask() {
 
 configure_schedule_and_netwake() {
   #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
-  sudo pmset repeat wakeorpoweron "weekdays" "09:00:00" shutdown "weekdays" "20:00:00"
-  sudo pmset displaysleep 5 disksleep 120 sleep 30 womp 1 autorestart 1 networkoversleep 1 ring 1
-  sudo systemsetup -setwakeonnetworkaccess on
+  sudo /usr/bin/pmset repeat wakeorpoweron "weekdays" "09:00:00" shutdown "weekdays" "20:00:00"
+  sudo /usr/bin/pmset displaysleep 5 disksleep 120 sleep 30 womp 1 autorestart 1 networkoversleep 1 ring 1
+  sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
 }
 
 configure_sleep_security() {
-  defaults write com.apple.screensaver askForPassword 1
-  defaults write com.apple.screensaver askForPasswordDelay -int 5
+  /usr/bin/defaults write com.apple.screensaver askForPassword 1
+  /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
 }
 
 configure_login_window() {
-  sudo defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
   "Welcome to the DEFT Media Lab. Login information is available on the white board or \
   from the EML Technician. You will be asked to agree to Media Lab policies once you have logged in."
-  sudo defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
-  sudo defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
-  sudo defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
 }
 
 setup_ARD() {
@@ -143,9 +143,9 @@ setup_SSHlogin() {
 }
 
 configure_SSHD() {
-  declare -r bakdate=$(date -j +%d.%m.%y)
+  declare -r bakdate=$(/bin/date -j +%d.%m.%y)
   echo "Editing /etc/sshd_config: LogLevel, PermitRootLogin, PubkeyAuthentication, PasswordAuthentication. Need root permissions."
-  sudo sed -i."$bakdate".bak \
+  sudo /usr/bin/sed -i."$bakdate".bak \
   -e 's/^#LogLevel INFO/LogLevel INFO/' \
   -e 's/^#PermitRootLogin .*/PermitRootLogin no/' \
   -e 's/^#PubkeyAuthentication .*/PubkeyAuthentication yes/' \
