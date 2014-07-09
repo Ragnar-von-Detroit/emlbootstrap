@@ -24,8 +24,7 @@ EOF
 }
 
 # install_xcode(){
-#   #this whole thing from osxc & https://github.com/timsutton/osx-vm-templates/blob/master/scripts/xcode-cli-tools.sh
-#   declare -xr osx_vers=$(sw_vers -productVersion | awk -F "." '{print $2}')
+# this whole thing from osxc & https://github.com/timsutton/osx-vm-templates/blob/master/scripts/xcode-cli-tools.sh
 #
 #   dev_tools(){
 #     if [ "$osx_vers" -ge 9 ]; then
@@ -163,18 +162,11 @@ EOF
 #   ruby -e 'require "json"; require "open-uri"; JSON.parse(open("https://api.github.com/users/emltech/keys").read).each{|x|puts x["key"]}' >> ~/.ssh/authorized_keys
 # }
 #
-# #clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
-# configure_dock() {
-#   sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
-#   sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist use-new-list-stack -bool YES
-#   sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-others -array-add '{ "tile-data" = { "list-type" = 1; }; "tile-type" = "recents-tile"; }'
-#   sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-others -array-add '{ "tile-data" = { "list-type" = 2; }; "tile-type" = "recents-tile"; }'
-#   sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist mouse-over-hilite-stack -bool true
-#   #defaults write com.apple.dock use-new-list-stack -bool YES
-#   #recent applications stack
-#   #defaults write com.apple.dock persistent-others -array-add '{ "tile-data" = { "list-type" = 1; }; "tile-type" = "recents-tile"; }'
-#   #defaults write com.apple.dock mouse-over-hilite-stack -bool true
-# }
+
+#clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
+  configure_dock() {
+    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
+  }
 
 create_users() {
   #Check for highest UniqueID and for Staff GroupID for Standard Users.
@@ -186,12 +178,6 @@ create_users() {
   #Array of User Pictures. DON'T escape spaces in paths for dscl!
   #Admin picture is Whiterose.tif, student is Golf.tif, Filmtech is Medal.tif, Instructor is Red Rose.tif
   declare -ar userpictures=("/Library/User Pictures/Sports/Golf.tif" "/Library/User Pictures/Fun/Medal.tif" "/Library/User Pictures/Flowers/Red Rose.tif")
-
-  #Turn off icloud set up on first login. We don't want to have to personally log into each machine to go through the intro...
-  disable_icloud_setup() {
-
-  }
-
 
   #createuser wants $1 USERNAME, $2 UNIQUEID, $3 USERPICTURE
   create_user() {
@@ -207,12 +193,40 @@ create_users() {
     sudo /usr/bin/dscl . -create "$userpath" hint "Ask EML Technician"
     sudo /usr/bin/dscl . -create "$userpath" Picture "$3"
     sudo passwd "$1"
-    mkdir "$userpath"
+    sudo mkdir "$userpath"
     printf "%s\n" "Creating ~/ at "\"$userpath\"" with the following items:"
-    sudo cp -Rv /System/Library/User\ Template/English.lproj "$userpath"
+    sudo cp -Rv /System/Library/User\ Template/English.lproj/ "$userpath"
     sudo chown -R "$1":staff "$userpath"
     printf "%s\n\n" "Finished creating account "\"$1\"" at "\"$userpath\""."
   }
+
+  #Turn off icloud set up on first login. We don't want to have to personally log into each machine to go through the intro...
+  #do not run this yet! this whole thing needs to re-written
+  disable_icloud_setup() {
+    local user="$1"
+    local userpath=/Users/"$user"
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant DidSeeCloudSetup -bool TRUE
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant GestureMovieSeen none
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant LastSeenCloudProductVersion "${sw_vers}"
+    sudo chown "$user" "$userpath"/Library/Preferences/com.apple.SetupAssistant.plist
+  }
+
+  configure_dock_per_user() {
+    local user="$1"
+    local userpath=/Users/"$user"
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock use-new-list-stack -bool YES
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock mouse-over-hilite-stack -bool true
+    #recent applications stack
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock persistent-others -array-add '{ "tile-data" = { "list-type" = 1; }; "tile-type" = "recents-tile"; }'
+    #recent documents stack
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock persistent-others -array-add '{ "tile-data" = { "list-type" = 2; }; "tile-type" = "recents-tile"; }'
+    sudo chown "$user" "$userpath"/Library/Preferences/com.apple.dock.plist
+  }
+
+  # configure_screensaver_per_user() {
+  #
+  #
+  # }
 
   for i in "${!defusers[@]}"
   do
@@ -225,12 +239,13 @@ create_users() {
     if [[ $(/usr/bin/dscl . list /Users | grep -ci "$username") -eq 0 ]]; then
       printf "\n%s\n" "User "\"$username\"" does not currently exist. making "\"$username\"" account now!"
       create_user "$username" "$uniqueid" "$userpicture"
-    else
+      disable_icloud_setup "$username"
+      configure_dock_per_user
+      else
       printf "%s\n\n" "User "\"$username\"" already exists. Cannot, should not, and will not overwrite. Skipping!"
     fi
   done
 
-  sudo ./disableicloud.sh
 }
 
 main() {
