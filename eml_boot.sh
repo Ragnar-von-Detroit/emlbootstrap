@@ -1,4 +1,6 @@
 #!/bin/bash
+declare -xr osx_vers=$(sw_vers -productVersion | awk -F. '{print $2}')
+declare -xr sw_vers=$(sw_vers -productVersion)
 
 intro() {
   cat <<- EOF
@@ -21,154 +23,158 @@ intro() {
 EOF
 }
 
-install_xcode(){
-  #this whole thing from osxc & https://github.com/timsutton/osx-vm-templates/blob/master/scripts/xcode-cli-tools.sh
-  declare -xr osx_vers=$(sw_vers -productVersion | awk -F "." '{print $2}')
-
-  dev_tools(){
-    if [ "$osx_vers" -ge 9 ]; then
-      # create the placeholder file that's checked by the CLI updates .dist in Apple's SUS catalog
-      /usr/bin/touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
-      # find the product id with "Developer" in the name
-      prodid=$(/usr/sbin/softwareupdate -l | awk '/Developer/{print x};{x=$0}' | awk '{print $2}')
-      # install it (amazingly, it won't find the update if we put the update ID in double-quotes)
-      /usr/sbin/softwareupdate -i $prodid -v
-      # on 10.7/10.8, we'd instead download from public download URLs, which can be found in
-      # the dvtdownloadableindex:
-      # https://devimages.apple.com.edgekey.net/downloads/xcode/simulators/index-3905972D-B609-49CE-8D06-51ADC78E07BC.dvtdownloadableindex
-    else
-      [ "$osx_vers" -eq 7 ] && dmgurl=http://devimages.apple.com/downloads/xcode/command_line_tools_for_xcode_os_x_lion_april_2013.dmg
-      [ "$osx_vers" -eq 8 ] && dmgurl=http://devimages.apple.com/downloads/xcode/command_line_tools_for_osx_mountain_lion_april_2014.dmg
-      toolspath="/tmp/clitools.dmg"
-      /usr/bin/curl "$dmgurl" -o "$toolspath"
-      tmpmount=$(/usr/bin/mktemp -d /tmp/clitools.xxxx)
-      /usr/bin/hdiutil attach "$toolspath" -mountpoint "$tmpmount"
-      /usr/sbin/installer -pkg "$(find $tmpmount -name '*.mpkg')" -target /
-      /usr/bin/hdiutil detach "$tmpmount"
-      /bin/rm -rf "$tmpmount"
-      /bin/rm "$toolspath"
-    fi
-  }
-
-  # Build array of most probable receipts from cli tools for current & past OS versions, partially from
-  # https://github.com/homebrew/homebrew/blob/208f963cf2/library/homebrew/os/mac/xcode.rb#l147-l150
-  declare -ra bundle_ids=('com.apple.pkg.DeveloperToolsCLI' \
-  'com.apple.pkg.DeveloperToolsCLILeo' 'com.apple.pkg.CLTools_Executables' \
-  'com.apple.pkg.XcodeMAS_iOSSDK_7_0')
-  # set flag for the presence of a cli tools receipt
-  declare -i xcode_cli=0
-  # iterate over array, break out and skip install if we get a zero return code
-  for id in ${bundle_ids[@]}; do
-    /usr/sbin/pkgutil --pkg-info=$id > /dev/null 2>&1
-    if [[ $? == 0 ]]; then
-      echo "Found "$id", Xcode Developer CLI Tools install not needed"
-      echo ""
-      echo ""
-      ((xcode_cli++))
-      break
-    fi
-  done
-
-  if [[ $xcode_cli -ne 1 ]]; then
-    echo "Xcode Tools installation"
-    echo "------------------------"
-    echo ""
-    echo "Please wait while xcode is installed"
-    dev_tools
-    if [[ $? -ne 0 ]]; then
-      echo "Xcode installation failed" && exit 1
-    fi
-    echo ""
-    echo ""
-  fi
-}
-
-install_homebrew() {
-  echo "Installing Homebrew. Follow the prompts."
-  /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
-  echo "Fixing Brew path"
-  echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile
-}
-
-install_cask() {
-  echo "Installing Cask"
-  /usr/local/bin/brew install caskroom/cask/brew-cask
-  #fix brew path and make sure Cask symlinks to /Applications rather than ~/Applications.
-  #This way we can ensure the all gui programs are accessible for all users, including our standard accounts.
-  echo "Changing default Cask symlink location to /Applications"
-  echo "export HOMEBREW_CASK_OPTS="--appdir=/Applications"" >> ~/.bash_profile
-}
-
-configure_schedule_and_netwake() {
-  #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
-  sudo /usr/bin/pmset repeat wakeorpoweron "weekdays" "09:00:00" shutdown "weekdays" "20:00:00"
-  sudo /usr/bin/pmset displaysleep 5 disksleep 120 sleep 30 womp 1 autorestart 1 networkoversleep 1 ring 1
-  sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
-}
-
-configure_sleep_security() {
-  /usr/bin/defaults write com.apple.screensaver askForPassword 1
-  /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
-}
-
-configure_login_window() {
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
-  "Welcome to the DEFT Media Lab. Login information is available on the white board or \
-  from the EML Technician. You will be asked to agree to Media Lab policies once you have logged in."
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
-}
-
-setup_ARD() {
-  printf "%s\n" "Setting up ARD access for "$USER"."
-  #Turn on Remote Desktop control with full access for Admin account only.
-  sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
-  -activate \
-  -configure \
-  -access -on \
-  -users "$USER" \
-  -privs -all \
-  -restart -agent
-}
-
-#Use systemsetup to turn on SSH access first (turns on the option is System Preferences),
-#then we edit sshd_config + make authorized keys for the admin user only.
-#We don't need to check if these are running, the commands check for themselves
-#and print out whether remotelogin is on or off.
-setup_SSHlogin() {
-  printf "\n%s\n" "Turning on SSH login in System Preferences."
-  sudo /usr/sbin/systemsetup -setremotelogin On
-  sudo /usr/sbin/systemsetup -getremotelogin
-}
-
-configure_SSHD() {
-  declare -r bakdate=$(/bin/date -j +%d.%m.%y)
-  echo "Editing /etc/sshd_config: LogLevel, PermitRootLogin, PubkeyAuthentication, PasswordAuthentication. Need root permissions."
-  sudo /usr/bin/sed -i."$bakdate".bak \
-  -e 's/^#LogLevel INFO/LogLevel INFO/' \
-  -e 's/^#PermitRootLogin .*/PermitRootLogin no/' \
-  -e 's/^#PubkeyAuthentication .*/PubkeyAuthentication yes/' \
-  -e 's/^#PasswordAuthentication .*/PasswordAuthentication no/' \
-  /etc/sshd_config
-}
-
-install_pubkey() {
-  echo "Installing public key from Github to ~/.ssh/authorized_keys"
-  mkdir ~/.ssh
-  touch ~/.ssh/authorized_keys
-  chmod 600 ~/.ssh/authorized_keys
-  ruby -e 'require "json"; require "open-uri"; JSON.parse(open("https://api.github.com/users/emltech/keys").read).each{|x|puts x["key"]}' >> ~/.ssh/authorized_keys
-}
-
-#clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
-configure_dock() {
-  sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
-  defaults write com.apple.dock use-new-list-stack -bool YES
-  #recent applications stack
-  defaults write com.apple.dock persistent-others -array-add '{ "tile-data" = { "list-type" = 1; }; "tile-type" = "recents-tile"; }'
-  defaults write com.apple.dock mouse-over-hilite-stack -bool true
-}
+# install_xcode(){
+#   #this whole thing from osxc & https://github.com/timsutton/osx-vm-templates/blob/master/scripts/xcode-cli-tools.sh
+#   declare -xr osx_vers=$(sw_vers -productVersion | awk -F "." '{print $2}')
+#
+#   dev_tools(){
+#     if [ "$osx_vers" -ge 9 ]; then
+#       # create the placeholder file that's checked by the CLI updates .dist in Apple's SUS catalog
+#       /usr/bin/touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+#       # find the product id with "Developer" in the name
+#       prodid=$(/usr/sbin/softwareupdate -l | awk '/Developer/{print x};{x=$0}' | awk '{print $2}')
+#       # install it (amazingly, it won't find the update if we put the update ID in double-quotes)
+#       /usr/sbin/softwareupdate -i $prodid -v
+#       # on 10.7/10.8, we'd instead download from public download URLs, which can be found in
+#       # the dvtdownloadableindex:
+#       # https://devimages.apple.com.edgekey.net/downloads/xcode/simulators/index-3905972D-B609-49CE-8D06-51ADC78E07BC.dvtdownloadableindex
+#     else
+#       [ "$osx_vers" -eq 7 ] && dmgurl=http://devimages.apple.com/downloads/xcode/command_line_tools_for_xcode_os_x_lion_april_2013.dmg
+#       [ "$osx_vers" -eq 8 ] && dmgurl=http://devimages.apple.com/downloads/xcode/command_line_tools_for_osx_mountain_lion_april_2014.dmg
+#       toolspath="/tmp/clitools.dmg"
+#       /usr/bin/curl "$dmgurl" -o "$toolspath"
+#       tmpmount=$(/usr/bin/mktemp -d /tmp/clitools.xxxx)
+#       /usr/bin/hdiutil attach "$toolspath" -mountpoint "$tmpmount"
+#       /usr/sbin/installer -pkg "$(find $tmpmount -name '*.mpkg')" -target /
+#       /usr/bin/hdiutil detach "$tmpmount"
+#       /bin/rm -rf "$tmpmount"
+#       /bin/rm "$toolspath"
+#     fi
+#   }
+#
+#   # Build array of most probable receipts from cli tools for current & past OS versions, partially from
+#   # https://github.com/homebrew/homebrew/blob/208f963cf2/library/homebrew/os/mac/xcode.rb#l147-l150
+#   declare -ra bundle_ids=('com.apple.pkg.DeveloperToolsCLI' \
+#   'com.apple.pkg.DeveloperToolsCLILeo' 'com.apple.pkg.CLTools_Executables' \
+#   'com.apple.pkg.XcodeMAS_iOSSDK_7_0')
+#   # set flag for the presence of a cli tools receipt
+#   declare -i xcode_cli=0
+#   # iterate over array, break out and skip install if we get a zero return code
+#   for id in ${bundle_ids[@]}; do
+#     /usr/sbin/pkgutil --pkg-info=$id > /dev/null 2>&1
+#     if [[ $? == 0 ]]; then
+#       echo "Found "$id", Xcode Developer CLI Tools install not needed"
+#       echo ""
+#       echo ""
+#       ((xcode_cli++))
+#       break
+#     fi
+#   done
+#
+#   if [[ $xcode_cli -ne 1 ]]; then
+#     echo "Xcode Tools installation"
+#     echo "------------------------"
+#     echo ""
+#     echo "Please wait while xcode is installed"
+#     dev_tools
+#     if [[ $? -ne 0 ]]; then
+#       echo "Xcode installation failed" && exit 1
+#     fi
+#     echo ""
+#     echo ""
+#   fi
+# }
+#
+# install_homebrew() {
+#   echo "Installing Homebrew. Follow the prompts."
+#   /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+#   echo "Fixing Brew path"
+#   echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile
+# }
+#
+# install_cask() {
+#   echo "Installing Cask"
+#   /usr/local/bin/brew install caskroom/cask/brew-cask
+#   #fix brew path and make sure Cask symlinks to /Applications rather than ~/Applications.
+#   #This way we can ensure the all gui programs are accessible for all users, including our standard accounts.
+#   echo "Changing default Cask symlink location to /Applications"
+#   echo "export HOMEBREW_CASK_OPTS="--appdir=/Applications"" >> ~/.bash_profile
+# }
+#
+# configure_schedule_and_netwake() {
+#   #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
+#   sudo /usr/bin/pmset repeat wakeorpoweron "weekdays" "09:00:00" shutdown "weekdays" "20:00:00"
+#   sudo /usr/bin/pmset displaysleep 5 disksleep 120 sleep 30 womp 1 autorestart 1 networkoversleep 1 ring 1
+#   sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
+# }
+#
+# configure_sleep_security() {
+#   /usr/bin/defaults write com.apple.screensaver askForPassword 1
+#   /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
+# }
+#
+# configure_login_window() {
+#   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
+#   "Welcome to the DEFT Media Lab. Login information is available on the white board or \
+#   from the EML Technician. You will be asked to agree to Media Lab policies once you have logged in."
+#   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
+#   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
+#   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
+# }
+#
+# setup_ARD() {
+#   printf "%s\n" "Setting up ARD access for "$USER"."
+#   #Turn on Remote Desktop control with full access for Admin account only.
+#   sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+#   -activate \
+#   -configure \
+#   -access -on \
+#   -users "$USER" \
+#   -privs -all \
+#   -restart -agent
+# }
+#
+# #Use systemsetup to turn on SSH access first (turns on the option is System Preferences),
+# #then we edit sshd_config + make authorized keys for the admin user only.
+# #We don't need to check if these are running, the commands check for themselves
+# #and print out whether remotelogin is on or off.
+# setup_SSHlogin() {
+#   printf "\n%s\n" "Turning on SSH login in System Preferences."
+#   sudo /usr/sbin/systemsetup -setremotelogin On
+#   sudo /usr/sbin/systemsetup -getremotelogin
+# }
+#
+# configure_SSHD() {
+#   declare -r bakdate=$(/bin/date -j +%d.%m.%y)
+#   echo "Editing /etc/sshd_config: LogLevel, PermitRootLogin, PubkeyAuthentication, PasswordAuthentication. Need root permissions."
+#   sudo /usr/bin/sed -i."$bakdate".bak \
+#   -e 's/^#LogLevel INFO/LogLevel INFO/' \
+#   -e 's/^#PermitRootLogin .*/PermitRootLogin no/' \
+#   -e 's/^#PubkeyAuthentication .*/PubkeyAuthentication yes/' \
+#   -e 's/^#PasswordAuthentication .*/PasswordAuthentication no/' \
+#   /etc/sshd_config
+# }
+#
+# install_pubkey() {
+#   echo "Installing public key from Github to ~/.ssh/authorized_keys"
+#   mkdir ~/.ssh
+#   touch ~/.ssh/authorized_keys
+#   chmod 600 ~/.ssh/authorized_keys
+#   ruby -e 'require "json"; require "open-uri"; JSON.parse(open("https://api.github.com/users/emltech/keys").read).each{|x|puts x["key"]}' >> ~/.ssh/authorized_keys
+# }
+#
+# #clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
+# configure_dock() {
+#   sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
+#   sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist use-new-list-stack -bool YES
+#   sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-others -array-add '{ "tile-data" = { "list-type" = 1; }; "tile-type" = "recents-tile"; }'
+#   sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-others -array-add '{ "tile-data" = { "list-type" = 2; }; "tile-type" = "recents-tile"; }'
+#   sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist mouse-over-hilite-stack -bool true
+#   #defaults write com.apple.dock use-new-list-stack -bool YES
+#   #recent applications stack
+#   #defaults write com.apple.dock persistent-others -array-add '{ "tile-data" = { "list-type" = 1; }; "tile-type" = "recents-tile"; }'
+#   #defaults write com.apple.dock mouse-over-hilite-stack -bool true
+# }
 
 create_users() {
   #Check for highest UniqueID and for Staff GroupID for Standard Users.
@@ -180,6 +186,12 @@ create_users() {
   #Array of User Pictures. DON'T escape spaces in paths for dscl!
   #Admin picture is Whiterose.tif, student is Golf.tif, Filmtech is Medal.tif, Instructor is Red Rose.tif
   declare -ar userpictures=("/Library/User Pictures/Sports/Golf.tif" "/Library/User Pictures/Fun/Medal.tif" "/Library/User Pictures/Flowers/Red Rose.tif")
+
+  #Turn off icloud set up on first login. We don't want to have to personally log into each machine to go through the intro...
+  disable_icloud_setup() {
+
+  }
+
 
   #createuser wants $1 USERNAME, $2 UNIQUEID, $3 USERPICTURE
   create_user() {
@@ -207,7 +219,7 @@ create_users() {
     local index="$i"
     local uniqueid="$((lastid + index + 1))" #+1 to not overwrite the LASTID on the 0 index of the array.
     local username="${defusers[$i]}"
-    local userpicture="${userpictures[$i]}"S
+    local userpicture="${userpictures[$i]}"
     #Don't create Student and Instructor accounts if they already exist. Warning! We only check for
     #Users in standard OSX location /Users/!
     if [[ $(/usr/bin/dscl . list /Users | grep -ci "$username") -eq 0 ]]; then
@@ -217,6 +229,8 @@ create_users() {
       printf "%s\n\n" "User "\"$username\"" already exists. Cannot, should not, and will not overwrite. Skipping!"
     fi
   done
+
+  sudo ./disableicloud.sh
 }
 
 main() {
@@ -228,17 +242,17 @@ main() {
 
   intro
   read -p "Continue? [Press Enter]"
-  install_xcode
-  install_homebrew
-  install_cask
-  configure_schedule_and_netwake
-  configure_sleep_security
-  configure_login_window
-  setup_ARD
-  setup_SSHlogin
-  configure_SSHD
-  install_pubkey
-  configure_dock
+  # install_xcode
+  # install_homebrew
+  # install_cask
+  # configure_schedule_and_netwake
+  # configure_sleep_security
+  # configure_login_window
+  # setup_ARD
+  # setup_SSHlogin
+  # configure_SSHD
+  # install_pubkey
+  # configure_dock
   create_users
 
   printf "%s\n" "DONE-SO! HEY LISTEN, YOU SHOULD REBOOT THE COMPUTER NOW. REALLY."
