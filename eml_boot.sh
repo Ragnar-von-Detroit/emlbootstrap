@@ -133,10 +133,12 @@ setup_ARD() {
   -restart -agent
 }
 
-#Use systemsetup to turn on SSH access first (turns on the option is System Preferences),
-#then we edit sshd_config + make authorized keys for the admin user only.
-#We don't need to check if these are running, the commands check for themselves
-#and print out whether remotelogin is on or off.
+# SSH SET UP
+# NEXT THREE COMMANDS
+# 1. Use systemsetup to turn on "Remote Login" in System Preferences
+# 2. Configure SSHD to use PublicKeys but not allow Root Login.
+# 3. Install public key from github.
+
 setup_SSHlogin() {
   printf "\n%s\n" "Turning on SSH login in System Preferences."
   sudo /usr/sbin/systemsetup -setremotelogin On
@@ -157,7 +159,7 @@ configure_SSHD() {
 install_pubkey() {
   echo "Installing public key from Github to ~/.ssh/authorized_keys"
   #get key from github. my own private hack...
-  local publickey=$(curl -fSsl https://api.github.com/users/emltech/keys | grep "key" | cut -d " " -f 6,7 | sed 's/"//g')
+  declare -r publickey=$(curl -fSsl https://api.github.com/users/emltech/keys | grep "key" | cut -d " " -f 6,7 | sed 's/"//g')
   #paranoia for updates. check for .ssh dir + authorized keys
   if [ ! -d ~/.ssh ]; then
     if [ ! -f ~/.ssh/authorized_keys ]; then
@@ -167,20 +169,20 @@ install_pubkey() {
       chmod 600 ~/.ssh/authorized_keys
     fi
   fi
-  #check if is already present.
+  #check if key in file, once made or found above
   if [[ $(cat ~/.ssh/authorized_keys | grep -c "$publickey") -eq 0 ]]; then
     echo "$publickey" >> ~/.ssh/authorized_keys
   else
-    echo "Public key is already installed. Skipping!"a
+    echo "Public key is already installed. Skipping!"
   fi
-#  ruby -e 'require "json"; require "open-uri"; JSON.parse(open("https://api.github.com/users/emltech/keys").read).each{|x|puts x["key"]}' >> ~/.ssh/authorized_keys
 }
+#DONE SSH
 
-
-#clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
-  configure_dock() {
-    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
-  }
+# this is bad advice below. Don't do it.
+# #clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
+#   configure_dock() {
+#     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
+#   }
 
 create_users() {
   #Check for highest UniqueID and for Staff GroupID for Standard Users.
@@ -189,7 +191,7 @@ create_users() {
   declare -ir staffgid=$(/usr/bin/dscl . -read /Groups/staff PrimaryGroupID | cut -d " " -f 2)
   #Array of EML default users (besides EML Admin)
   declare -ar defusers=("student" "filmtech" "instructor")
-  #Array of User Pictures. DON'T escape spaces in paths for dscl!
+  #DON'T escape spaces in paths for dscl!
   #Admin picture is Whiterose.tif, student is Golf.tif, Filmtech is Medal.tif, Instructor is Red Rose.tif
   declare -ar userpictures=("/Library/User Pictures/Sports/Golf.tif" "/Library/User Pictures/Fun/Medal.tif" "/Library/User Pictures/Flowers/Red Rose.tif")
 
@@ -219,7 +221,7 @@ create_users() {
   disable_icloud_setup() {
     local user="$1"
     local userpath=/Users/"$user"
-    #if [ ! -f "$userpath"/Library/Preferences/com.apple.SetupAssistant.plist ]
+    #defaults write will make this file properly for us. No reason to check if it exists.
     sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant DidSeeCloudSetup -bool TRUE
     sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant GestureMovieSeen none
     sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant LastSeenCloudProductVersion "${sw_vers}"
