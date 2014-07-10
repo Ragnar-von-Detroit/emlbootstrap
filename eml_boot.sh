@@ -219,7 +219,7 @@ create_users() {
   disable_icloud_setup() {
     local user="$1"
     local userpath=/Users/"$user"
-    if [ ! -f "$userpath"/Library/Preferences/com.apple.SetupAssistant.plist ]
+    #if [ ! -f "$userpath"/Library/Preferences/com.apple.SetupAssistant.plist ]
     sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant DidSeeCloudSetup -bool TRUE
     sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant GestureMovieSeen none
     sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant LastSeenCloudProductVersion "${sw_vers}"
