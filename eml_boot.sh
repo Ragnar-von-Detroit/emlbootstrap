@@ -161,13 +161,14 @@ install_pubkey() {
   #paranoia for updates. check for .ssh dir + authorized keys
   if [ ! -d ~/.ssh ]; then
     if [ ! -f ~/.ssh/authorized_keys ]; then
+      echo "Making .ssh directory"
       mkdir ~/.ssh
       touch ~/.ssh/authorized_keys
       chmod 600 ~/.ssh/authorized_keys
     fi
   fi
   #check if is already present.
-  if [[ cat ~/.ssh/authorized_keys | grep -c "$publickey" -eq 0]]; then
+  if [[ $(cat ~/.ssh/authorized_keys | grep -c "$publickey") -eq 0]]; then
     echo "$publickey" >> ~/.ssh/authorized_keys
   else
     echo "Public key is already installed. Skipping!"a
