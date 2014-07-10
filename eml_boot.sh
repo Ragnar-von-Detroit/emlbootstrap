@@ -156,10 +156,23 @@ configure_SSHD() {
 
 install_pubkey() {
   echo "Installing public key from Github to ~/.ssh/authorized_keys"
-  mkdir ~/.ssh
-  touch ~/.ssh/authorized_keys
-  chmod 600 ~/.ssh/authorized_keys
-  ruby -e 'require "json"; require "open-uri"; JSON.parse(open("https://api.github.com/users/emltech/keys").read).each{|x|puts x["key"]}' >> ~/.ssh/authorized_keys
+  #get key from github. my own private hack...
+  local publickey=$(curl -fSsl https://api.github.com/users/emltech/keys | grep "key" | cut -d " " -f 6,7 | sed 's/"//g')
+  #paranoia for updates. check for .ssh dir + authorized keys
+  if [ ! -d ~/.ssh ]; then
+    if [ ! -f ~/.ssh/authorized_keys ]; then
+      mkdir ~/.ssh
+      touch ~/.ssh/authorized_keys
+      chmod 600 ~/.ssh/authorized_keys
+    fi
+  fi
+  #check if is already present.
+  if [[ cat ~/.ssh/authorized_keys | grep -c "$publickey" -eq 0]]; then
+    echo "$publickey" >> ~/.ssh/authorized_keys
+  else
+    echo "Public key is already installed. Skipping!"a
+  fi
+#  ruby -e 'require "json"; require "open-uri"; JSON.parse(open("https://api.github.com/users/emltech/keys").read).each{|x|puts x["key"]}' >> ~/.ssh/authorized_keys
 }
 
 
