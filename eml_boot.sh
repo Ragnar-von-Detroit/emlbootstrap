@@ -205,7 +205,7 @@ create_users() {
   disable_icloud_setup() {
     local user="$1"
     local userpath=/Users/"$user"
-#    if [ ! -f "$userpath"/Library/Preferences/com.apple.SetupAssistant ]
+    if [ ! -f "$userpath"/Library/Preferences/com.apple.SetupAssistant.plist ]
     sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant DidSeeCloudSetup -bool TRUE
     sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant GestureMovieSeen none
     sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant LastSeenCloudProductVersion "${sw_vers}"
@@ -223,9 +223,9 @@ create_users() {
     sudo defaults write "$userpath"/Library/Preferences/com.apple.dock.plist use-new-list-stack -bool YES
     sudo defaults write "$userpath"/Library/Preferences/com.apple.dock.plist mouse-over-hilite-stack -bool true
     #recent applications stack
-    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock.plist persistent-others -array-add '{ "tile-data" = { "list-type" = 1; "preferreditemsize" = -1; "viewas" = 3; }; "tile-type" = "recents-tile"; }'
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock.plist persistent-others -array-add '{ "tile-data" = { "list-type" = 1; }; "tile-type" = "recents-tile"; }'
     #recent documents stack
-    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock.plist persistent-others -array-add '{ "tile-data" = { "list-type" = 2; "preferreditemsize" = -1; "viewas" = 3; }; "tile-type" = "recents-tile"; }'
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock.plist persistent-others -array-add '{ "tile-data" = { "list-type" = 2; }; "tile-type" = "recents-tile"; }'
     sudo chown "$user" "$userpath"/Library/Preferences/com.apple.dock.plist
   }
 
