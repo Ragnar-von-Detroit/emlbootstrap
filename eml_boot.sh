@@ -217,7 +217,6 @@ create_users() {
   }
 
   #Turn off icloud set up on first login. We don't want to have to personally log into each machine to go through the intro...
-  #do not run this yet! this whole thing needs to re-written
   disable_icloud_setup() {
     local user="$1"
     local userpath=/Users/"$user"
