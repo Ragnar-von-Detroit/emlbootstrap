@@ -192,6 +192,7 @@ configure_dock() {
     #recent documents stack
     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist -array-add '{ "tile-data" = { "list-type" = 2; }; "tile-type" = "recents-tile"; }'
     sudo cp /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist /System/Library/User\ Template/English.lproj/Library/Preferences/com.apple.dock.plist
+    sudo cp /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist /System/Library/User\ Template/Non_localized/Library/Preferences/com.apple.dock.plist
 }
 
 create_users() {
