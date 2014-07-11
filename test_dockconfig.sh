@@ -46,7 +46,9 @@
     local user="$1"
     local userpath=/Users/"$user"
     echo "default writing to "$userpath"/Library/Preferences... for "$user""
-    sudo cp -v /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist "$userpath"/Library/Preferences/com.apple.dock.plist
+    sudo cp -v /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist /tmp/
+    sudo mv /tmp/default.plist /tmp/com.apple.dock.plist
+    sudo mv /tmp/com.apple.dock.plist "$userpath"/Library/Preferences/com.apple.dock.plist
     sudo defaults delete "$userpath"/Library/Preferences/com.apple.dock persistent-apps*
     sudo defaults delete "$userpath"/Library/Preferences/com.apple.dock persistent-others*
     sudo defaults write "$userpath"/Library/Preferences/com.apple.dock use-new-list-stack -bool YES
