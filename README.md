@@ -15,4 +15,4 @@ Todo:
 - [ ] Media Lab quartz composer screensaver
   - [ ] Install script for the screen saver and enable during login screen
   - [ ] Install for all users and set timeouts & lockout
-- [ ] Disable icloud signin on first login to all accounts.
+- [x] Disable icloud signin on first login to all accounts.
