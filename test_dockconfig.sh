@@ -45,7 +45,7 @@
     echo "Configuring dock for user "$1""
     local user="$1"
     local userpath=/Users/"$user"
-    echo "default writing to "$userpath"/Library/Preferences..."
+    echo "default writing to "$userpath"/Library/Preferences... for "$user""
     #sudo cp -v /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist "$userpath"/Library/Preferences/com.apple.dock.plist
     sudo defaults delete "$userpath"/Library/Preferences/com.apple.dock persistent-apps*
     sudo defaults delete "$userpath"/Library/Preferences/com.apple.dock persistent-others*
