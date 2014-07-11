@@ -176,13 +176,21 @@ install_pubkey() {
     echo "Public key is already installed. Skipping!"
   fi
 }
+
 #DONE SSH
 
-# this is bad advice below. Don't do it.
-# #clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
-#   configure_dock() {
-#     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
-#   }
+
+#clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
+configure_dock() {
+    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
+    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-others -array
+    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist use-new-list-stack -bool YES
+    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist mouse-over-hilite-stack -bool true
+    #recent applications stack
+    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist -array-add '{ "tile-data" = { "list-type" = 1; }; "tile-type" = "recents-tile"; }'
+    #recent documents stack
+    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist -array-add '{ "tile-data" = { "list-type" = 2; }; "tile-type" = "recents-tile"; }'
+}
 
 create_users() {
   #Check for highest UniqueID and for Staff GroupID for Standard Users.
@@ -227,27 +235,15 @@ create_users() {
     sudo chown "$user" "$userpath"/Library/Preferences/com.apple.SetupAssistant.plist
   }
 
-  configure_dock_per_user() {
-    echo "Configuring dock for user "$1""
-    local user="$1"
-    local userpath=/Users/"$user"
-    echo "default writing to "$userpath"/Library/Preferences..."
-    sudo cp -v /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist "$userpath"/Library/Preferences/com.apple.dock.plist
-    sudo defaults delete "$userpath"/Library/Preferences/com.apple.dock.plist persistent-apps*
-    sudo defaults delete "$userpath"/Library/Preferences/com.apple.dock.plist persistent-others*
-    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock.plist use-new-list-stack -bool YES
-    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock.plist mouse-over-hilite-stack -bool true
-    #recent applications stack
-    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock.plist persistent-others -array-add '{ "tile-data" = { "list-type" = 1; }; "tile-type" = "recents-tile"; }'
-    #recent documents stack
-    sudo defaults write "$userpath"/Library/Preferences/com.apple.dock.plist persistent-others -array-add '{ "tile-data" = { "list-type" = 2; }; "tile-type" = "recents-tile"; }'
-    sudo chown "$user" "$userpath"/Library/Preferences/com.apple.dock.plist
+  # configure_dock_per_user() {
+  #   echo "Configuring dock for user "$1""
+  #   local user="$1"
+  #   local userpath=/Users/"$user"
+  #   echo "default writing to "$userpath"/Library/Preferences..."
+  #   sudo cp -v /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist "$userpath"/Library/Preferences/com.apple.dock.plist
+
   }
 
-  # configure_screensaver_per_user() {
-  #
-  #
-  # }
 
   for i in "${!defusers[@]}"
   do
@@ -261,7 +257,7 @@ create_users() {
       printf "\n%s\n" "User "\"$username\"" does not currently exist. making "\"$username\"" account now!"
       create_user "$username" "$uniqueid" "$userpicture"
       disable_icloud_setup "$username"
-      configure_dock_per_user "$username"
+      # configure_dock_per_user "$username"
       else
       printf "%s\n\n" "User "\"$username\"" already exists. Cannot, should not, and will not overwrite. Skipping!"
     fi
