@@ -182,6 +182,7 @@ install_pubkey() {
 
 #clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
 configure_dock() {
+    echo "Configure system wide dock prefs"
     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-others -array
     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist use-new-list-stack -bool YES
@@ -190,7 +191,7 @@ configure_dock() {
     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist -array-add '{ "tile-data" = { "list-type" = 1; }; "tile-type" = "recents-tile"; }'
     #recent documents stack
     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist -array-add '{ "tile-data" = { "list-type" = 2; }; "tile-type" = "recents-tile"; }'
-    sudo cp /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist /System/Library/User Template/English.lproj/Library/Preferences/com.apple.dock.plist
+    sudo cp /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist /System/Library/User\ Template/English.lproj/Library/Preferences/com.apple.dock.plist
 }
 
 create_users() {
