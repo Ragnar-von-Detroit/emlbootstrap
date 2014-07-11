@@ -242,7 +242,7 @@ create_users() {
   #   echo "default writing to "$userpath"/Library/Preferences..."
   #   sudo cp -v /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist "$userpath"/Library/Preferences/com.apple.dock.plist
 
-  }
+  #}
 
 
   for i in "${!defusers[@]}"
