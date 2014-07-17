@@ -15,10 +15,10 @@ intro() {
   4. Create Student, FilmTech, and Instructor as Standard Users. Be sure to have the standard passwords ready.
   5. Change Dock settings for all users to make it pretty the way we like it.
 
-  This script needs to be run as EML Admin. It will provision the computer for you so that it is ready for Ansible management
-  from the EML Tech machine.
+  This script needs to be run as EML Admin. It will make a basic minimum provision of the computer for you so that it is
+  ready for Ansible management from the EML Tech machine.
 
-  You will need to reboot after this script is finished.
+  You will need to (really should) reboot after this script is finished.
 
 EOF
 }
@@ -85,19 +85,25 @@ install_xcode(){
 }
 
 install_homebrew() {
+  declare -r brew_path="export PATH=/usr/local/bin:$PATH"
   echo "Installing Homebrew. Follow the prompts."
   /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
-  echo "Fixing Brew path"
-  echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile
+  if [[ $(grep -c "$brew_path" ~/.bash_profile) -eq 0 ]]; then
+    echo "Fixing Brew path"
+    echo "$brew_path" >> ~/.bash_profile
+  fi
 }
 
 install_cask() {
+  declare -r cask_appdir="export HOMEBREW_CASK_OPTS=\"--appdir=/Applications\""
   echo "Installing Cask"
   /usr/local/bin/brew install caskroom/cask/brew-cask
   #fix brew path and make sure Cask symlinks to /Applications rather than ~/Applications.
   #This way we can ensure the all gui programs are accessible for all users, including our standard accounts.
-  echo "Changing default Cask symlink location to /Applications"
-  echo "export HOMEBREW_CASK_OPTS="--appdir=/Applications"" >> ~/.bash_profile
+  if [[ $(grep -c "$cask_appdir" ~/.bash_profile) -eq 0 ]]; then
+    echo "Changing default Cask symlink location to /Applications"
+    echo "$cask_appdir" >> ~/.bash_profile
+  fi
 }
 
 configure_schedule_and_netwake() {
@@ -170,7 +176,7 @@ install_pubkey() {
     fi
   fi
   #check if key in file, once made or found above
-  if [[ $(cat ~/.ssh/authorized_keys | grep -c "$publickey") -eq 0 ]]; then
+  if [[ $(grep -c "$publickey" ~/.ssh/authorized_keys) -eq 0 ]]; then
     echo "$publickey" >> ~/.ssh/authorized_keys
   else
     echo "Public key is already installed. Skipping!"
@@ -185,14 +191,6 @@ configure_dock() {
     echo "Configure system wide dock prefs"
     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-others -array
-    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist use-new-list-stack -bool YES
-    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist mouse-over-hilite-stack -bool true
-    #recent applications stack
-    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist -array-add '{ "tile-data" = { "list-type" = 1; }; "tile-type" = "recents-tile"; }'
-    #recent documents stack
-    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist -array-add '{ "tile-data" = { "list-type" = 2; }; "tile-type" = "recents-tile"; }'
-    sudo cp /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist /System/Library/User\ Template/English.lproj/Library/Preferences/com.apple.dock.plist
-    sudo cp /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist /System/Library/User\ Template/Non_localized/Library/Preferences/com.apple.dock.plist
 }
 
 create_users() {
@@ -238,16 +236,6 @@ create_users() {
     sudo chown "$user" "$userpath"/Library/Preferences/com.apple.SetupAssistant.plist
   }
 
-  # configure_dock_per_user() {
-  #   echo "Configuring dock for user "$1""
-  #   local user="$1"
-  #   local userpath=/Users/"$user"
-  #   echo "default writing to "$userpath"/Library/Preferences..."
-  #   sudo cp -v /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist "$userpath"/Library/Preferences/com.apple.dock.plist
-
-  #}
-
-
   for i in "${!defusers[@]}"
   do
     local index="$i"
@@ -260,7 +248,6 @@ create_users() {
       printf "\n%s\n" "User "\"$username\"" does not currently exist. making "\"$username\"" account now!"
       create_user "$username" "$uniqueid" "$userpicture"
       disable_icloud_setup "$username"
-      # configure_dock_per_user "$username"
       else
       printf "%s\n\n" "User "\"$username\"" already exists. Cannot, should not, and will not overwrite. Skipping!"
     fi
