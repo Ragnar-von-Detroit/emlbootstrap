@@ -247,12 +247,12 @@ create_users() {
 }
 
 custom_screensaver() {
-  sudo mv /System/Library/Screen \Savers/Arabesque.qtz /System/Library/Screen \Savers/Arabesque.qtz.bak
-  sudo cp ./eml_screensaver.qtz /System/Library/Screen \Savers/
-  sudo mv /System/Library/Screen \Savers/eml_screensaver.qtz Arabesque.qtz
-  sudo chown root /System/Library/Screen \Savers/Arabesque.qtz
-  sudo chgrp wheel /System/Library/Screen \Savers/Arabesque.qtz
-  sudo chmod 644 /System/Library/Screen \Savers/Arabesque.qtz
+  sudo mv /System/Library/Screen\ Savers/Arabesque.qtz /System/Library/Screen\ Savers/Arabesque.qtz.bak
+  sudo cp ./eml_screensaver.qtz /System/Library/Screen\ Savers/
+  sudo mv /System/Library/Screen\ Savers/eml_screensaver.qtz Arabesque.qtz
+  sudo chown root /System/Library/Screen\ Savers/Arabesque.qtz
+  sudo chgrp wheel /System/Library/Screen\ Savers/Arabesque.qtz
+  sudo chmod 644 /System/Library/Screen\ Savers/Arabesque.qtz
 }
 
 configure_login_window() {
