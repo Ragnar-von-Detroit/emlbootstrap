@@ -109,22 +109,13 @@ install_cask() {
 configure_schedule_and_netwake() {
   #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
   sudo /usr/bin/pmset repeat wakeorpoweron "weekdays" "09:00:00" shutdown "weekdays" "20:00:00"
-  sudo /usr/bin/pmset displaysleep 5 disksleep 120 sleep 30 womp 1 autorestart 1 networkoversleep 1 ring 1
+  sudo /usr/bin/pmset displaysleep 5 disksleep 120 sleep 60 womp 1 autorestart 1 networkoversleep 1 ring 1
   sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
 }
 
 configure_sleep_security() {
   /usr/bin/defaults write com.apple.screensaver askForPassword 1
   /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
-}
-
-configure_login_window() {
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
-  "Welcome to the DEFT Media Lab. Login information is available on the white board or \
-  from the EML Technician. You will be asked to agree to Media Lab policies once you have logged in."
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
 }
 
 setup_ARD() {
@@ -255,6 +246,31 @@ create_users() {
 
 }
 
+custom_screensaver() {
+  sudo mv /System/Library/Screen \Savers/Arabesque.qtz /System/Library/Screen \Savers/Arabesque.qtz.bak
+  sudo cp ./eml_screensaver.qtz /System/Library/Screen \Savers/
+  sudo mv /System/Library/Screen \Savers/eml_screensaver.qtz Arabesque.qtz
+  sudo chown root /System/Library/Screen \Savers/Arabesque.qtz
+  sudo chgrp wheel /System/Library/Screen \Savers/Arabesque.qtz
+  sudo chmod 644 /System/Library/Screen \Savers/Arabesque.qtz
+}
+
+configure_login_window() {
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
+  "Welcome to the English Media Lab. Login information is available on the white board or \
+  from the EML Technician. By logging in you agree to abide by the Lab Computer Guidelines. \
+  Please ask the EML Technician for any assistance."
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
+  #set loginwindow to use screensaver we just installed
+  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowIdleTime 60
+  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowModulePath "/System/Library/Screen Savers/Arabesque.qtz"
+  #set PolicyBanner
+  sudo cp -R ./PolicyBanner.rtfd /Library/Security/
+  sudo chmod -R o+rw /Library/Security/PolicyBanner.rtfd
+}
+
 main() {
     #Before we start. Check if we have admin privileges
     declare -ir in_admin="$(/usr/bin/dscl /Search read /Groups/admin GroupMembership | /usr/bin/grep -c $USER)"
@@ -269,13 +285,14 @@ main() {
   install_cask
   configure_schedule_and_netwake
   configure_sleep_security
-  configure_login_window
   setup_ARD
   setup_SSHlogin
   configure_SSHD
   install_pubkey
   configure_dock
   create_users
+  custom_screensaver
+  configure_login_window
 
   printf "%s\n" "DONE-SO! HEY LISTEN, YOU SHOULD REBOOT THE COMPUTER NOW. REALLY."
 }
