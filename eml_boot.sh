@@ -264,7 +264,7 @@ configure_login_window() {
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
   #set loginwindow to use screensaver we just installed
-  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowIdleTime 60
+  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowIdleTime 15
   sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowModulePath "/System/Library/Screen Savers/Arabesque.qtz"
   #set PolicyBanner
   sudo cp -R ./PolicyBanner.rtfd /Library/Security/
