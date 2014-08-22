@@ -247,7 +247,7 @@ create_users() {
 }
 
 custom_screensaver() {
-  sudo mv /System/Library/Screen\ Savers/Arabesque.qtz /System/Library/Screen\ Savers/Arabesque.qtz.bak
+  sudo mv /System/Library/Screen\ Savers/Arabesque.qtz /System/Library/Screen\ Savers/backup.arabesque.qtz
   sudo cp ./eml_screensaver.qtz /System/Library/Screen\ Savers/
   sudo mv /System/Library/Screen\ Savers/eml_screensaver.qtz /System/Library/Screen\ Savers/Arabesque.qtz
   sudo chown root /System/Library/Screen\ Savers/Arabesque.qtz
