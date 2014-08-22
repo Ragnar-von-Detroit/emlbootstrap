@@ -140,6 +140,8 @@ setup_SSHlogin() {
   printf "\n%s\n" "Turning on SSH login in System Preferences."
   sudo /usr/sbin/systemsetup -setremotelogin On
   sudo /usr/sbin/systemsetup -getremotelogin
+  #turn on firewall but allow ssh, ard, etc.
+  sudo defaults write /Library/Preferences/com.apple.alf globalstate -int 1
 }
 
 configure_SSHD() {
@@ -178,11 +180,12 @@ install_pubkey() {
 
 
 #clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
-configure_dock() {
-    echo "Configure system wide dock prefs"
-    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
-    sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-others -array
-}
+# This is totatlly busted. Seems impossible. We'll do the whole thing with dockutil later. Fuckit.
+# configure_dock() {
+#     echo "Configure system wide dock prefs"
+#     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
+#     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-others -array
+# }
 
 create_users() {
   #Check for highest UniqueID and for Staff GroupID for Standard Users.
@@ -289,7 +292,7 @@ main() {
   setup_SSHlogin
   configure_SSHD
   install_pubkey
-  configure_dock
+#  configure_dock
   create_users
   custom_screensaver
   configure_login_window
