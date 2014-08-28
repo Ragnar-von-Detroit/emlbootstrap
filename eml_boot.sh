@@ -109,7 +109,7 @@ install_cask() {
 configure_schedule_and_netwake() {
   #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
   sudo /usr/bin/pmset repeat wakeorpoweron MTWRF 08:59:00
-  sudo /usr/bin/pmset shutdown MTWRF 22:00:00
+  sudo /usr/bin/pmset repeat shutdown MTWRF 22:00:00
   sudo /usr/bin/pmset displaysleep 3 disksleep 120 sleep 60 womp 1 autorestart 1 networkoversleep 1 ring 1
   sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
 }
@@ -305,7 +305,7 @@ main() {
   setup_SSHlogin
   configure_SSHD
   install_pubkey
-#  configure_dock
+# configure_dock
   misc_defaults
   create_users
   custom_screensaver
