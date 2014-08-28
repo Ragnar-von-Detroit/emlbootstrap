@@ -108,8 +108,9 @@ install_cask() {
 
 configure_schedule_and_netwake() {
   #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
-  sudo /usr/bin/pmset repeat wakeorpoweron "weekdays" "09:00:00" shutdown "weekdays" "20:00:00"
-  sudo /usr/bin/pmset displaysleep 5 disksleep 120 sleep 60 womp 1 autorestart 1 networkoversleep 1 ring 1
+  sudo /usr/bin/pmset repeat wakeorpoweron MTWRF 08:59:00
+  sudo /usr/bin/pmset shutdown MTWRF 22:00:00
+  sudo /usr/bin/pmset displaysleep 3 disksleep 120 sleep 60 womp 1 autorestart 1 networkoversleep 1 ring 1
   sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
 }
 
@@ -177,6 +178,18 @@ install_pubkey() {
 }
 
 #DONE SSH
+
+misc_defaults() {
+# Disable Resume system-wide
+sudo defaults write NSGlobalDomain NSQuitAlwaysKeepsWindows -bool false
+# Expand save panel by default
+sudo defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+sudo defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
+# Prevent Time Machine from prompting to use new hard drives as backup volume
+defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
+# Disable local Time Machine backups
+hash tmutil &> /dev/null && sudo tmutil disablelocal
+}
 
 
 #clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
@@ -293,6 +306,7 @@ main() {
   configure_SSHD
   install_pubkey
 #  configure_dock
+  misc_defaults
   create_users
   custom_screensaver
   configure_login_window
