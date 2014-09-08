@@ -109,7 +109,7 @@ install_cask() {
 configure_schedule_and_netwake() {
   #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
   sudo /usr/bin/pmset repeat wakeorpoweron MTWRF 08:59:00 shutdown MTWRF 22:00:00
-  sudo /usr/bin/pmset displaysleep 45 disksleep 120 sleep 60 womp 1 autorestart 1 networkoversleep 1 ring 1
+  sudo /usr/bin/pmset displaysleep 120 disksleep 200 sleep 145 womp 1 autorestart 1 networkoversleep 1 ring 1
   sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
 }
 
