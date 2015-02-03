@@ -87,7 +87,7 @@ install_xcode(){
 install_homebrew() {
   declare -r brew_path="export PATH=/usr/local/bin:$PATH"
   echo "Installing Homebrew. Follow the prompts."
-  /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+  ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
   if [[ $(grep -c "$brew_path" ~/.bash_profile) -eq 0 ]]; then
     echo "Fixing Brew path"
     echo "$brew_path" >> ~/.bash_profile
@@ -108,8 +108,8 @@ install_cask() {
 
 configure_schedule_and_netwake() {
   #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
-  sudo /usr/bin/pmset repeat wakeorpoweron MTWRF 08:59:00 shutdown MTWRF 22:00:00
-  sudo /usr/bin/pmset displaysleep 120 disksleep 200 sleep 145 womp 1 autorestart 1 networkoversleep 1 ring 1
+  sudo /usr/bin/pmset repeat wakeorpoweron MTWRF 08:59:00 shutdown MTWRFSU 22:00:00
+  sudo /usr/bin/pmset displaysleep 240 disksleep 240 sleep 480 womp 1 autorestart 1 networkoversleep 1 ring 1
   sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
 }
 
@@ -189,15 +189,6 @@ defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 # Disable local Time Machine backups
 hash tmutil &> /dev/null && sudo tmutil disablelocal
 }
-
-
-#clear the dock for all users BEFORE creating user accounts. Then apply defaults. We'll populate the dock with dockutil through Homebrew + Ansible
-# This is totatlly busted. Seems impossible. We'll do the whole thing with dockutil later. Fuckit.
-# configure_dock() {
-#     echo "Configure system wide dock prefs"
-#     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-apps -array
-#     sudo defaults write /System/Library/CoreServices/Dock.app/Contents/Resources/en.lproj/default.plist persistent-others -array
-# }
 
 create_users() {
   #Check for highest UniqueID and for Staff GroupID for Standard Users.
