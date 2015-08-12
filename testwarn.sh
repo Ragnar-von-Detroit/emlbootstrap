@@ -14,10 +14,13 @@ print_status() {
 
   case "$1" in
     error)
-      echo "${RED}""${BOLD}" "==>" "${UNDY}""$2""${RESTORE}"
+      printf "${RED}${BOLD}%-4s" "==>"
+      printf "${UNDY}%s${RESTORE}\n" "$2"
       ;;
     warn)
       echo "${YELLOW}""${BOLD}" "==>" "${UNDY}""$2""${RESTORE}"
+
+
       ;;
     success)
       echo "${GREEN}""${BOLD}" "==>" "${UNDY}""$2""${RESTORE}"
@@ -34,19 +37,21 @@ print_status() {
 
 }
 
+print_status error "big!"
+print_status error "stop fucker!"
 
-  EML BOOTSTRAP INTRO
-
-  This is the new install script for the English Media Lab.
-  It will do the following tasks for you:
-
-  1. Install xcode command line tools needed for Homebrew & Cask
-  2. Install and set up Homebrew and Caskroom
-  3. Set up PubkeyAuthentication in sshd_config and install SSH public key.
-  4. Create Student, FilmTech, and Instructor as Standard Users. Be sure to have the standard passwords ready.
-  5. Change Dock settings for all users to make it pretty the way we like it.
-
-  This script needs to be run as EML Admin. It will make a basic minimum provision of the computer for you so that it is
-  ready for Ansible management from the EML Tech machine.
-
-  You will need to (really should) reboot after this script is finished.
+  # EML BOOTSTRAP INTRO
+  #
+  # This is the new install script for the English Media Lab.
+  # It will do the following tasks for you:
+  #
+  # 1. Install xcode command line tools needed for Homebrew & Cask
+  # 2. Install and set up Homebrew and Caskroom
+  # 3. Set up PubkeyAuthentication in sshd_config and install SSH public key.
+  # 4. Create Student, FilmTech, and Instructor as Standard Users. Be sure to have the standard passwords ready.
+  # 5. Change Dock settings for all users to make it pretty the way we like it.
+  #
+  # This script needs to be run as EML Admin. It will make a basic minimum provision of the computer for you so that it is
+  # ready for Ansible management from the EML Tech machine.
+  #
+  # You will need to (really should) reboot after this script is finished.
