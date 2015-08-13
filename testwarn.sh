@@ -1,35 +1,35 @@
 #!/bin/sh
 
 #colours for warnings
-
-
 style_text() {
   RESTORE='\033[0m'
 
   RED='\033[00;31m'
   GREEN='\033[00;32m'
   YELLOW='\033[00;33m'
+  CYAN='\033[00;36m'
   UNDY='\033[4m'
   BOLD='\033[1m'
 
   case "$1" in
     error)
-      printf "${RED}${BOLD}%-4s" "==>"
-      printf "${UNDY}%s${RESTORE}\n\n" "$2"
+      printf "\n${RED}${BOLD}%s\t" "EMLBOOT->"
+      printf "${UNDY}%s${RESTORE}\n" "$2"
       ;;
     warn)
-      printf "${YELLOW}${BOLD}%-4s" "==>"
-      printf "${UNDY}%s${RESTORE}\n\n" "$2"
+      printf "\n${YELLOW}${BOLD}%s\t" "EMLBOOT->"
+      printf "${UNDY}%s${RESTORE}\n" "$2"
       ;;
     success)
-      printf "${GREEN}${BOLD}%-4s" "==>"
-      printf "${UNDY}%s${RESTORE}\n\n" "$2"
+      printf "\n${GREEN}${BOLD}%s\t" "EMLBOOT->"
+      printf "${UNDY}%s${RESTORE}\n" "$2"
       ;;
     highlight)
-      printf "\n${BOLD}%s${RESTORE}\n\n" "$2"
+      printf "\n${BOLD}%s${RESTORE}\n" "$2"
       ;;
     explain)
-      printf "\n${UNDY}%s${RESTORE}\n\n" "$2"
+      printf "\n${CYAN}%s\t" "EMLBOOT->"
+      printf "${UNDY}%s${RESTORE}\n\n" "$2"
       ;;
     *)
       echo "print_status error. No color. What the else?"
@@ -76,23 +76,20 @@ style_text highlight "${yell}"
 #Instead, we set the path in .bashrc and source .bashrc from .bash_profile when
 #we're actually in a logged in shell. Most linux distros use this setup.
 create_bash_profile_bashrc() {
-#store .bash_profile code in a variable
-read -d '' bashp <<EOF
+if [[ ! -f $HOME/.bashrc ]]; then
+  style_text explain "Creating .bashrc for Ansible management."
+  touch $HOME/.bashrc
+fi
+
+if [[ $(/usr/bin/grep -c "source ~/.bashrc" $HOME/.bash_profile) -eq 0 ]]; then
+  style_text explain "Setting .bash_profile to source .bashrc"
+  cat <<EOF >> $HOME/.bash_profile
 #Source .bashrc, installed by EML Bootstrap script.
 #Interactive non-login for Anisible management of brew and cask.
 if [ -f ~/.bashrc ]; then
    source ~/.bashrc
 fi
 EOF
-
-if [[ ! -e $HOME/.bashrc ]]; then
-  style_text explain "Creating .bashrc for Ansible management."
-  touch $HOME/.bashrc
-fi
-
-if [[ $(/usr/bin/grep -c "source .bashrc" $HOME/.bash_profile) -eq 0 ]]; then
-  style_text explain "Setting .bash_profile to source .bashrc"
-  echo "$bashp" >> $HOME/.bash_profile
 fi
 }
 
@@ -101,6 +98,7 @@ install_homebrew() {
   style_text explain "Installing Homebrew. Follow the prompts. You'll be asked to install Command Line Tools. Allow it."
   /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
   #Make sure brew cellar is first in path.
+
   if [[ $(/usr/bin/grep -c "$brew_path" $HOME/.bashrc) -eq 0 ]]; then
     style_text explain "Fixing brew path in .bashrc"
     echo "$brew_path" >> $HOME/.bashrc
@@ -112,7 +110,7 @@ install_homebrew() {
 
 install_cask() {
   local cask_appdir="export HOMEBREW_CASK_OPTS=\"--appdir=/Applications\""
-  echo "Installing Cask"
+  style_text explain "Installing Cask. Will require root."
   /usr/local/bin/brew install caskroom/cask/brew-cask
   #Make sure Cask symlinks to /Applications rather than ~/Applications.
   #This way we can ensure the all gui programs are accessible for all users, including our standard accounts.
@@ -126,6 +124,6 @@ install_cask() {
 }
 
 intro
+create_bash_profile_bashrc
 install_homebrew
 install_cask
-create_bash_profile_bashrc
