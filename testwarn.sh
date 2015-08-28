@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/env bash
 
 #colours for warnings
 style_text() {
@@ -13,22 +13,22 @@ style_text() {
 
   case "$1" in
     error)
-      printf "\n${RED}${BOLD}%s\t" "EMLBOOT->"
+      printf "\n${RED}${BOLD}%s\t" "EMLBOOT==>"
       printf "${UNDY}%s${RESTORE}\n" "$2"
       ;;
     warn)
-      printf "\n${YELLOW}${BOLD}%s\t" "EMLBOOT->"
+      printf "\n${YELLOW}${BOLD}%s\t" "EMLBOOT==>"
       printf "${UNDY}%s${RESTORE}\n" "$2"
       ;;
     success)
-      printf "\n${GREEN}${BOLD}%s\t" "EMLBOOT->"
+      printf "\n${GREEN}${BOLD}%s\t" "EMLBOOT==>"
       printf "${UNDY}%s${RESTORE}\n" "$2"
       ;;
     highlight)
       printf "\n${BOLD}%s${RESTORE}\n" "$2"
       ;;
     explain)
-      printf "\n${CYAN}%s\t" "EMLBOOT->"
+      printf "\n${CYAN}%s\t" "EMLBOOT==>"
       printf "${UNDY}%s${RESTORE}\n\n" "$2"
       ;;
     *)
@@ -66,6 +66,7 @@ of the computer for you so that it is ready for Ansible management
 from the EML Tech machine.
 
 You should reboot after this script is finished.
+------------------------------------------------
 EOF
 style_text highlight "${yell}"
 }
@@ -95,33 +96,73 @@ fi
 
 install_homebrew() {
   local brew_path="export PATH=/usr/local/bin:$PATH"
-  style_text explain "Installing Homebrew. Follow the prompts. You'll be asked to install Command Line Tools. Allow it."
-  /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-  #Make sure brew cellar is first in path.
+  local brew_installed=$(type brew >/dev/null 2>&1)
 
-  if [[ $(/usr/bin/grep -c "$brew_path" $HOME/.bashrc) -eq 0 ]]; then
-    style_text explain "Fixing brew path in .bashrc"
-    echo "$brew_path" >> $HOME/.bashrc
+  check_brew_path() {
+    if /usr/bin/grep -c '^export\sPATH=/usr/local/bin' ../.bashrc ); then
+      style_text explain "Fixing brew path in ~/.bashrc"
+      echo "$brew_path" >> $HOME/.bashrc
+    else
+      style_text warn "Brew path is already in .bashrc. Skiping."
+    fi
+  }
+
+  if [[ brew_installed -eq 0 ]]; then
+    style_text warn "Brew is alread installed. Skipping installation."
+    echo " "
+    read -r -p "Would you like to fix the PATH in your ~/.bashrc? [Y/N] "
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      check_brew_path
+    fi
   else
-    style_text warn "Brew path is already in .bashrc. Have you installed it already?"
-    style_text error "Brew install aborted."
+    style_text explain "Installing Homebrew. Follow the prompts. Requires root. You'll be asked to install Command Line Tools. Allow it."
+    /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    check_brew_path
   fi
 }
 
 install_cask() {
   local cask_appdir="export HOMEBREW_CASK_OPTS=\"--appdir=/Applications\""
-  style_text explain "Installing Cask. Will require root."
-  /usr/local/bin/brew install caskroom/cask/brew-cask
-  #Make sure Cask symlinks to /Applications rather than ~/Applications.
-  #This way we can ensure the all gui programs are accessible for all users, including our standard accounts.
+  #cask is a module of brew, not a full blow command, so we can't `type` it...
+  local cask_installed=$(brew cask -h >/dev/null 2>&1 ; echo $?)
+
+  # Make sure Cask symlinks to /Applications rather than ~/Applications.
+  # This way we can ensure the all gui programs are accessible for all users, including our standard accounts.
+  check_cask_options() {
   if [[ $(grep -c "$cask_appdir" $HOME/.bashrc) -eq 0 ]]; then
     style_text explain "Changing default Cask symlink location to /Applications in .bashrc"
     echo "$cask_appdir" >> $HOME/.bashrc
   else
-    style_text warn "Cask options are already in .bashrc. Have you installed it already?"
-    style_text error "Cask install aborted."
+    style_text warn "Cask options are already in .bashrc. Skipping."
+  fi
+  }
+
+  if [[ cask_installed -eq 0 ]]; then
+    style_text warn "Cask is already installed. Skipping installation."
+    echo " "
+    read -r -p "Would you like to set the Cask appdir option to install casks to /Applications? [Y/N]"
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      check_cask_options
+    fi
+  else
+      style_text explain "Installing Cask. Will require root."
+      /usr/local/bin/brew install caskroom/cask/brew-cask
+      check_cask_options
   fi
 }
+
+#admin level defaults. most defaults are run in a different script.
+setup_system() {
+  #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
+  sudo /usr/bin/pmset repeat wakeorpoweron MTWRF 08:59:00 shutdown MTWRFSU 22:00:00
+  sudo /usr/bin/pmset displaysleep 120 disksleep 240 sleep 480 womp 1 autorestart 1 networkoversleep 1
+  sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
+  #sleep security
+
+}
+
+
+
 
 intro
 create_bash_profile_bashrc
