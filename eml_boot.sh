@@ -81,6 +81,10 @@ create_bash_profile_bashrc() {
     style_text explain "Creating .bashrc for Ansible management."
     touch $HOME/.bashrc
   fi
+  if [[ ! -f $HOME/.bash_profile ]]; then
+    style_text explain "Creating .bash_profile for interactive sessions."
+    touch $HOME/.bashrc
+  fi
 
   if grep -q "source ~/.bashrc" $HOME/.bash_profile ; then
     style_text warn "~/.bashrc already linked in ~/.bash_profile"
@@ -400,19 +404,19 @@ create_users() {
   			Privileges -bool true
 
   		#Enable snap-to-grid for icons on the desktop and in other icon views
-  		sudo /usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:arrangeBy grid" "$pref_path/"Library/Preferences/com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:arrangeBy grid" "$pref_path/"Library/Preferences/com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:arrangeBy grid" "$pref_path/"Library/Preferences/com.apple.finder.plist
+  		sudo /usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:arrangeBy grid" "$pref_path/"com.apple.finder.plist
+  		sudo /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:arrangeBy grid" "$pref_path/"com.apple.finder.plist
+  		sudo /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:arrangeBy grid" "$pref_path/"com.apple.finder.plist
 
   		#Increase grid spacing for icons on the desktop and in other icon views
-  		sudo /usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:gridSpacing 100" "$pref_path/"Library/Preferences/com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:gridSpacing 100" "$pref_path/"Library/Preferences/com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:gridSpacing 100" "$pref_path/"Library/Preferences/com.apple.finder.plist
+  		sudo /usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:gridSpacing 100" "$pref_path/"com.apple.finder.plist
+  		sudo /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:gridSpacing 100" "$pref_path/"com.apple.finder.plist
+  		sudo /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:gridSpacing 100" "$pref_path/"com.apple.finder.plist
 
   		#Increase the size of icons on the desktop and in other icon views
-  		sudo /usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:iconSize 80" "$pref_path/"Library/Preferences/com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:iconSize 80" "$pref_path/"Library/Preferences/com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:iconSize 80" "$pref_path/"Library/Preferences/com.apple.finder.plist
+  		sudo /usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:iconSize 80" "$pref_path/"com.apple.finder.plist
+  		sudo /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:iconSize 80" "$pref_path/"com.apple.finder.plist
+  		sudo /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:iconSize 80" "$pref_path/"com.apple.finder.plist
 
   		###############################################################################
   		# Dock, Dashboard,
