@@ -12,19 +12,8 @@
 # UI
 ###############################################################################
 
-#Expanding the save and print panel by default
-defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
-defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
-defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
-
 #Automatically quit printer app once the print jobs complete
 defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
-
-#Save to disk, rather than iCloud, by default
-defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
-
-#Removing duplicates in the 'Open With' menu"
-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -kill -r -domain local -domain system -domain user
 
 # Set Help Viewer windows to non-floating mode
 defaults write com.apple.helpviewer DevMode -bool true
@@ -34,13 +23,6 @@ defaults write com.apple.universalaccess reduceTransparency -bool true
 
 # Prevent Time Machine from prompting to use new hard drives as backup volume
 defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
-
-################################################################################
-# Trackpad, mouse, keyboard, Bluetooth accessories, and input
-###############################################################################
-
-#Enabling full keyboard access for all controls (enable Tab in modal dialogs, menu windows, etc.
-defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
 
 ###############################################################################
 # Finder
@@ -186,11 +168,9 @@ defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
 
 #Disabling the annoying backswipe in Chrome
 defaults write com.google.Chrome AppleEnableSwipeNavigateWithScrolls -bool false
-defaults write com.google.Chrome.canary AppleEnableSwipeNavigateWithScrolls -bool false
 
 #Using the system-native print preview dialog in Chrome
 defaults write com.google.Chrome DisablePrintPreview -bool true
-defaults write com.google.Chrome.canary DisablePrintPreview -bool true
 
 # Expand the print dialog by default in Chrome
 defaults write com.google.Chrome PMPrintingExpandedStateForPrint2 -bool true

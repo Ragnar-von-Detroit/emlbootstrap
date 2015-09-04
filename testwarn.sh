@@ -266,6 +266,17 @@ system_defaults() {
 
   style_text explain "Disabling local timemachine snapshots"
   hash tmutil &> /dev/null && sudo tmutil disablelocal
+
+  #Expanding the save and print panel by default
+  defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+  defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+  defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
+
+  #Save to disk, rather than iCloud, by default
+  defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
+
+  #Enabling full keyboard access for all controls (enable Tab in modal dialogs, menu windows, etc.
+  defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
 }
 
 create_users() {
