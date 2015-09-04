@@ -1,5 +1,8 @@
 #!/bin/bash
 
+declare -xr osx_vers=$(sw_vers -productVersion | awk -F. '{print $2}')
+declare -xr sw_vers=$(sw_vers -productVersion)
+
 #colours for warnings
 style_text() {
   RESTORE='\033[0m'
@@ -83,7 +86,7 @@ create_bash_profile_bashrc() {
   fi
   if [[ ! -f $HOME/.bash_profile ]]; then
     style_text explain "Creating .bash_profile for interactive sessions."
-    touch $HOME/.bashrc
+    touch $HOME/.bash_profile
   fi
 
   if grep -q "source ~/.bashrc" $HOME/.bash_profile ; then
@@ -403,20 +406,6 @@ create_users() {
   			OpenWith -bool true \
   			Privileges -bool true
 
-  		#Enable snap-to-grid for icons on the desktop and in other icon views
-  		sudo /usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:arrangeBy grid" "$pref_path/"com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:arrangeBy grid" "$pref_path/"com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:arrangeBy grid" "$pref_path/"com.apple.finder.plist
-
-  		#Increase grid spacing for icons on the desktop and in other icon views
-  		sudo /usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:gridSpacing 100" "$pref_path/"com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:gridSpacing 100" "$pref_path/"com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:gridSpacing 100" "$pref_path/"com.apple.finder.plist
-
-  		#Increase the size of icons on the desktop and in other icon views
-  		sudo /usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:iconSize 80" "$pref_path/"com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:iconSize 80" "$pref_path/"com.apple.finder.plist
-  		sudo /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:iconSize 80" "$pref_path/"com.apple.finder.plist
 
   		###############################################################################
   		# Dock, Dashboard,
