@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/bin/bash
 
 #colours for warnings
 style_text() {
@@ -13,22 +13,22 @@ style_text() {
 
   case "$1" in
     error)
-      printf "\n${RED}${BOLD}%s\t" "EMLBOOT==>"
+      printf "\n${RED}${BOLD}%s\t" "$0"
       printf "${UNDY}%s${RESTORE}\n" "$2"
       ;;
     warn)
-      printf "\n${YELLOW}${BOLD}%s\t" "EMLBOOT==>"
+      printf "\n${YELLOW}${BOLD}%s\t" "$0"
       printf "${UNDY}%s${RESTORE}\n" "$2"
       ;;
     success)
-      printf "\n${GREEN}${BOLD}%s\t" "EMLBOOT==>"
+      printf "\n${GREEN}${BOLD}%s\t" "$0"
       printf "${UNDY}%s${RESTORE}\n" "$2"
       ;;
     highlight)
       printf "\n${BOLD}%s${RESTORE}\n" "$2"
       ;;
     explain)
-      printf "\n${CYAN}%s\t" "EMLBOOT==>"
+      printf "\n${CYAN}%s\t" "$0"
       printf "${UNDY}%s${RESTORE}\n\n" "$2"
       ;;
     *)
@@ -77,37 +77,43 @@ style_text highlight "${yell}"
 #Instead, we set the path in .bashrc and source .bashrc from .bash_profile when
 #we're actually in a logged in shell. Most linux distros use this setup.
 create_bash_profile_bashrc() {
-if [[ ! -f $HOME/.bashrc ]]; then
-  style_text explain "Creating .bashrc for Ansible management."
-  touch $HOME/.bashrc
-fi
+  if [[ ! -f $HOME/.bashrc ]]; then
+    style_text explain "Creating .bashrc for Ansible management."
+    touch $HOME/.bashrc
+  fi
 
-if [[ $(/usr/bin/grep -c "source ~/.bashrc" $HOME/.bash_profile) -eq 0 ]]; then
-  style_text explain "Setting .bash_profile to source .bashrc"
-  cat <<EOF >> $HOME/.bash_profile
+  if grep -q "source ~/.bashrc" $HOME/.bash_profile ; then
+    style_text warn "~/.bashrc already linked in ~/.bash_profile"
+  else
+    style_text explain "Setting .bash_profile to source .bashrc"
+    cat <<EOF >> $HOME/.bash_profile
 #Source .bashrc, installed by EML Bootstrap script.
 #Interactive non-login for Anisible management of brew and cask.
 if [ -f ~/.bashrc ]; then
    source ~/.bashrc
 fi
 EOF
-fi
+  fi
 }
 
 install_homebrew() {
   local brew_path="export PATH=/usr/local/bin:$PATH"
-  local brew_installed=$(type brew >/dev/null 2>&1)
+  local find_brew
+  find_brew=$(type brew >/dev/null 2>&1)
+  brew_installed=$?
+
+  style_text explain "Trying to install Homebrew."
 
   check_brew_path() {
-    if /usr/bin/grep -c '^export\sPATH=/usr/local/bin' ../.bashrc ); then
+    if grep -q '^export\sPATH=/usr/local/bin' $HOME/.bashrc ; then
+      style_text error "Brew path is already in .bashrc. Skiping."
+    else
       style_text explain "Fixing brew path in ~/.bashrc"
       echo "$brew_path" >> $HOME/.bashrc
-    else
-      style_text warn "Brew path is already in .bashrc. Skiping."
     fi
   }
 
-  if [[ brew_installed -eq 0 ]]; then
+  if [[ "$brew_installed" -eq 0 ]]; then
     style_text warn "Brew is alread installed. Skipping installation."
     echo " "
     read -r -p "Would you like to fix the PATH in your ~/.bashrc? [Y/N] "
@@ -123,21 +129,25 @@ install_homebrew() {
 
 install_cask() {
   local cask_appdir="export HOMEBREW_CASK_OPTS=\"--appdir=/Applications\""
+  local find_cask
   #cask is a module of brew, not a full blow command, so we can't `type` it...
-  local cask_installed=$(brew cask -h >/dev/null 2>&1 ; echo $?)
+  find_cask=$(brew cask -h >/dev/null 2>&1)
+  cask_installed=$?
+
+  style_text explain "Trying to install Homebrew Cask"
 
   # Make sure Cask symlinks to /Applications rather than ~/Applications.
   # This way we can ensure the all gui programs are accessible for all users, including our standard accounts.
   check_cask_options() {
-  if [[ $(grep -c "$cask_appdir" $HOME/.bashrc) -eq 0 ]]; then
+  if grep -q "$cask_appdir" $HOME/.bashrc ; then
+    style_text error "Cask options are already in .bashrc. Skipping."
+  else
     style_text explain "Changing default Cask symlink location to /Applications in .bashrc"
     echo "$cask_appdir" >> $HOME/.bashrc
-  else
-    style_text warn "Cask options are already in .bashrc. Skipping."
   fi
   }
 
-  if [[ cask_installed -eq 0 ]]; then
+  if [[ "$cask_installed" -eq 0 ]]; then
     style_text warn "Cask is already installed. Skipping installation."
     echo " "
     read -r -p "Would you like to set the Cask appdir option to install casks to /Applications? [Y/N]"
@@ -151,20 +161,186 @@ install_cask() {
   fi
 }
 
-#admin level defaults. most defaults are run in a different script.
-setup_system() {
+system_setup() {
+  declare -r bakdate=$(/bin/date -j +%d.%m.%y)
+  declare -r publickey=$(curl -fSsl https://api.github.com/users/emltech/keys \
+  | grep "key" \
+  | cut -d " " -f 6,7 \
+  | sed 's/"//g')
+
+  style_text explain "Setting up computer for Admin management..."
+
   #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
+  style_text explain "Setting wake schedule. Admin password is required"
   sudo /usr/bin/pmset repeat wakeorpoweron MTWRF 08:59:00 shutdown MTWRFSU 22:00:00
   sudo /usr/bin/pmset displaysleep 120 disksleep 240 sleep 480 womp 1 autorestart 1 networkoversleep 1
   sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
+
   #sleep security
+  /usr/bin/defaults write com.apple.screensaver askForPassword 1
+  /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
+
+  #Turn on Remote Desktop control with full access for Admin account only.
+  style_text explain "Setting up ARD access for $USER"
+  sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+  -activate \
+  -configure \
+  -access -on \
+  -users "$USER" \
+  -privs -all \
+  -restart -agent
+
+  #ssh admin access
+  style_text explain "Turning on SSH login in System Preferences."
+  sudo /usr/sbin/systemsetup -setremotelogin On
+  sudo /usr/sbin/systemsetup -getremotelogin
+  #turn on firewall but allow ssh, ard, etc.
+  sudo defaults write /Library/Preferences/com.apple.alf globalstate -int 1
+
+
+  style_text explain "Editing /etc/sshd_config for better security."
+  sudo sed -i."$bakdate".bak \
+  -e 's/^#LogLevel INFO/LogLevel INFO/' \
+  -e 's/^#PermitRootLogin .*/PermitRootLogin no/' \
+  -e 's/^#PubkeyAuthentication .*/PubkeyAuthentication yes/' \
+  -e 's/^#PasswordAuthentication .*/PasswordAuthentication no/' \
+  /etc/sshd_config
+  style_text explain "Created backup /etc/sshd_config at /etc/sshd_config.$bakdate.bak"
+
+  #install pub key from github account
+  style_text explain "Installing public key from EML github account"
+  if [ ! -d $HOME/.ssh ]; then
+    style_text explain "Making .ssh directory"
+    mkdir $HOME/.ssh
+  fi
+  if [ ! -f $HOME/.ssh/authorized_keys ]; then
+    style_text explain "Creating authorized_keys file with proper permissions."
+    touch $HOME/.ssh/authorized_keys
+    chmod 600 $HOME/.ssh/authorized_keys
+  fi
+
+  #check if key in file, once made or found above
+  if grep -q "$publickey" $HOME/.ssh/authorized_keys ; then
+    style_text warn "Public key is already installed. Skipping."
+  else
+    echo "$publickey" >> $HOME/.ssh/authorized_keys
+  fi
+}
+
+#Do system wide defaults here. Per user defaults happen when we create user accounts
+system_defaults() {
+  style_text explain "Disabling Spotlight indexing for any volume that gets mounted and has not yet been indexed before."
+  sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
+
+  style_text explain "Changing indexing order and disable some search results in Spotlight"
+  sudo defaults write com.apple.spotlight orderedItems -array \
+      '{"enabled" = 1;"name" = "APPLICATIONS";}' \
+      '{"enabled" = 1;"name" = "SYSTEM_PREFS";}' \
+      '{"enabled" = 1;"name" = "DIRECTORIES";}' \
+      '{"enabled" = 1;"name" = "PDF";}' \
+      '{"enabled" = 1;"name" = "FONTS";}' \
+      '{"enabled" = 0;"name" = "DOCUMENTS";}' \
+      '{"enabled" = 0;"name" = "MESSAGES";}' \
+      '{"enabled" = 0;"name" = "CONTACT";}' \
+      '{"enabled" = 0;"name" = "EVENT_TODO";}' \
+      '{"enabled" = 0;"name" = "IMAGES";}' \
+      '{"enabled" = 0;"name" = "BOOKMARKS";}' \
+      '{"enabled" = 0;"name" = "MUSIC";}' \
+      '{"enabled" = 0;"name" = "MOVIES";}' \
+      '{"enabled" = 0;"name" = "PRESENTATIONS";}' \
+      '{"enabled" = 0;"name" = "SPREADSHEETS";}' \
+  # Load new settings before rebuilding the index
+  killall mds > /dev/null 2>&1
+  # Make sure indexing is enabled for the main volume
+  sudo mdutil -i on / > /dev/null
+  # Rebuild the index from scratch
+  sudo mdutil -E / > /dev/null
+
+  style_text explain "Disabling system-wide resume"
+  sudo defaults write com.apple.systempreferences NSQuitAlwaysKeepsWindows -bool false
+
+  style_text explain "Expanding the save panel by default"
+  sudo defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+  sudo defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+  sudo defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
+
+  style_text explain "Disabling local timemachine snapshots"
+  hash tmutil &> /dev/null && sudo tmutil disablelocal
+}
+
+create_users() {
+  #Check for highest UniqueID and for Staff GroupID for Standard Users.
+  declare -ir lastid=$(/usr/bin/dscl . -list /Users UniqueID | awk '{print $2}' | sort -n | tail -1)
+  #Staff GroupID is almost certainly 20 but why guess?
+  declare -ir staffgid=$(/usr/bin/dscl . -read /Groups/staff PrimaryGroupID | cut -d " " -f 2)
+  #Array of EML default users (besides EML Admin)
+  declare -ar defusers=("Student" "Filmtech" "Instructor")
+  #DON'T escape spaces in paths for dscl!
+  #Admin picture is Whiterose.tif, student is Golf.tif, Filmtech is Medal.tif, Instructor is Red Rose.tif
+  declare -ar userpictures=("/Library/User Pictures/Sports/Golf.tif" "/Library/User Pictures/Fun/Medal.tif" "/Library/User Pictures/Flowers/Red Rose.tif")
+
+  #createuser wants $1 USERNAME, $2 UNIQUEID, $3 USERPICTURE
+  create_user() {
+    local userpath=/Users/"$1"
+    #Convert first letter of username to Uppercase. This is just for Real Name key, which is what shows up on login screen. (eg. Instructor)
+    local username="$1"
+    sudo /usr/bin/dscl . -create "$userpath"
+    sudo /usr/bin/dscl . -create "$userpath" UserShell /bin/bash
+    sudo /usr/bin/dscl . -create "$userpath" RealName "$username"
+    sudo /usr/bin/dscl . -create "$userpath" UniqueID "$2"
+    sudo /usr/bin/dscl . -create "$userpath" PrimaryGroupID "$staffgid"
+    sudo /usr/bin/dscl . -create "$userpath" NFSHomeDirectory "$userpath"
+    sudo /usr/bin/dscl . -create "$userpath" hint "Ask EML Technician"
+    sudo /usr/bin/dscl . -create "$userpath" Picture "$3"
+    sudo passwd "$1"
+    sudo mkdir "$userpath"
+    style_text explain "Creating ~/ at "\"$userpath\""."
+    sudo cp -R /System/Library/User\ Template/English.lproj/ "$userpath"
+    sudo chown -R "$1":staff "$userpath"
+    style_text explain "Finished creating account "\"$1\"" at "\"$userpath\""."
+  }
+
+  #Turn off icloud set up on first login. We don't want to have to personally log into each machine to go through the intro...
+  #icloud saving is dealt with in the defaults function.
+  disable_icloud_setup() {
+    local user="$1"
+    local userpath=/Users/"$user"
+    #defaults write will make this file properly for us. No reason to check if it exists.
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant DidSeeCloudSetup -bool TRUE
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant GestureMovieSeen none
+    sudo defaults write "$userpath"/Library/Preferences/com.apple.SetupAssistant LastSeenCloudProductVersion "${sw_vers}"
+    sudo chown "$user" "$userpath"/Library/Preferences/com.apple.SetupAssistant.plist
+  }
+
+  for i in "${!defusers[@]}"
+  do
+    local index="$i"
+    local uniqueid="$((lastid + index + 1))" #+1 to not overwrite the LASTID on the 0 index of the array.
+    local username="${defusers[$i]}"
+    local userpicture="${userpictures[$i]}"
+    #Don't create Student and Instructor accounts if they already exist. Warning! We only check for
+    #Users in standard OSX location /Users/!
+    if [[ $(/usr/bin/dscl . list /Users | grep -ci "$username") -eq 0 ]]; then
+      style_text explain "User "\"$username\"" does not currently exist. making "\"$username\"" account now!"
+      create_user "$username" "$uniqueid" "$userpicture"
+      disable_icloud_setup "$username"
+      else
+      style_text error "User "\"$username\"" already exists. Cannot, should not, and will not overwrite. Skipping!"
+    fi
+  done
 
 }
 
 
-
+# Set a custom wallpaper image. `DefaultDesktop.jpg` is already a symlink, and
+# all wallpapers are in `/Library/Desktop Pictures/`. The default is `Wave.jpg`.
+#rm -rf ~/Library/Application Support/Dock/desktoppicture.db
+#sudo rm -rf /System/Library/CoreServices/DefaultDesktop.jpg
+#sudo ln -s /path/to/your/image /System/Library/CoreServices/DefaultDesktop.jpg
 
 intro
 create_bash_profile_bashrc
 install_homebrew
 install_cask
+system_setup
+system_defaults
