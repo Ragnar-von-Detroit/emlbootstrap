@@ -275,18 +275,30 @@ system_defaults() {
   hash tmutil &> /dev/null && sudo tmutil disablelocal
 
   #Expanding the save and print panel by default
-  defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
-  defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
-  defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
+  sudo defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+  sudo defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+  sudo defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
 
   #Save to disk, rather than iCloud, by default
-  defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
+  sudo defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
 
   #Enabling full keyboard access for all controls (enable Tab in modal dialogs, menu windows, etc.
-  defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
+  sudo defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
 
   #Show all filename extensions in Finder by default
-  defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+  sudo defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+}
+
+#this is a bit hacky. We want a custom eml login screen saver. OS x only
+#allows us to use flurry or arabesque as the login screen saver. So we symlink
+#them.
+custom_screensaver() {
+  sudo mv /System/Library/Screen\ Savers/Flurry.saver /System/Library/Screen\ Savers/backup.flurry.saver
+  sudo cp ./eml_screensaver.qtz /System/Library/Screen\ Savers/
+  sudo mv /System/Library/Screen\ Savers/eml_screensaver.qtz /System/Library/Screen\ Savers/Flurry.saver
+  sudo chown root /System/Library/Screen\ Savers/Flurry.saver
+  sudo chgrp wheel /System/Library/Screen\ Savers/Flurry.saver
+  sudo chmod 644 /System/Library/Screen\ Savers/Flurry.saver
 }
 
 create_users() {
@@ -365,4 +377,5 @@ install_homebrew
 install_cask
 system_setup
 system_defaults
+custom_screensaver
 create_users
