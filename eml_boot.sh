@@ -289,16 +289,13 @@ system_defaults() {
   sudo defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 }
 
-#this is a bit hacky. We want a custom eml login screen saver. OS x only
-#allows us to use flurry or arabesque as the login screen saver. So we symlink
-#them.
 custom_screensaver() {
-  sudo mv /System/Library/Screen\ Savers/Flurry.saver /System/Library/Screen\ Savers/backup.flurry.saver
+  sudo mv /System/Library/Screen\ Savers/Arabesque.qtz /System/Library/Screen\ Savers/backup.arabesque.qtz
   sudo cp ./eml_screensaver.qtz /System/Library/Screen\ Savers/
-  sudo mv /System/Library/Screen\ Savers/eml_screensaver.qtz /System/Library/Screen\ Savers/Flurry.saver
-  sudo chown root /System/Library/Screen\ Savers/Flurry.saver
-  sudo chgrp wheel /System/Library/Screen\ Savers/Flurry.saver
-  sudo chmod 644 /System/Library/Screen\ Savers/Flurry.saver
+  sudo mv /System/Library/Screen\ Savers/eml_screensaver.qtz /System/Library/Screen\ Savers/Arabesque.qtz
+  sudo chown root /System/Library/Screen\ Savers/Arabesque.qtz
+  sudo chgrp wheel /System/Library/Screen\ Savers/Arabesque.qtz
+  sudo chmod 644 /System/Library/Screen\ Savers/Arabesque.qtz
 }
 
 configure_login_window() {
@@ -311,7 +308,7 @@ configure_login_window() {
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
   #set loginwindow to use screensaver we just installed
   sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowIdleTime 15
-  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowModulePath "/System/Library/Screen Savers/Flurry.saver"
+  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowModulePath "/System/Library/Screen Savers/Arabesque.qtz"
   #set PolicyBanner
   sudo cp -R ./PolicyBanner.rtfd /Library/Security/
   sudo chmod -R o+rw /Library/Security/PolicyBanner.rtfd
@@ -394,4 +391,5 @@ install_cask
 system_setup
 system_defaults
 custom_screensaver
+configure_login_window
 create_users
