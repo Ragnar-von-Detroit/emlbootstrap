@@ -289,22 +289,6 @@ system_defaults() {
   sudo defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 }
 
-configure_login_window() {
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
-  "Welcome to the English Media Lab. Login information is available on the white board or \
-  from the EML Technician. By logging in you agree to abide by the Lab Computer Guidelines. \
-  Please ask the EML Technician for any assistance."
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
-  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
-  #set loginwindow to use screensaver we just installed
-  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowIdleTime 15
-  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowModulePath "/System/Library/Screen Savers/Arabesque.qtz"
-  #set PolicyBanner
-  sudo cp -R ./PolicyBanner.rtfd /Library/Security/
-  sudo chmod -R o+rw /Library/Security/PolicyBanner.rtfd
-}
-
 #this is a bit hacky. We want a custom eml login screen saver. OS x only
 #allows us to use flurry or arabesque as the login screen saver. So we symlink
 #them.
@@ -315,6 +299,22 @@ custom_screensaver() {
   sudo chown root /System/Library/Screen\ Savers/Flurry.saver
   sudo chgrp wheel /System/Library/Screen\ Savers/Flurry.saver
   sudo chmod 644 /System/Library/Screen\ Savers/Flurry.saver
+}
+
+configure_login_window() {
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
+  "Welcome to the English Media Lab. Login information is available on the white board or \
+  from the EML Technician. By logging in you agree to abide by the Lab Computer Guidelines. \
+  Please ask the EML Technician for any assistance."
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
+  #set loginwindow to use screensaver we just installed
+  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowIdleTime 15
+  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowModulePath "/System/Library/Screen Savers/Flurry.saver"
+  #set PolicyBanner
+  sudo cp -R ./PolicyBanner.rtfd /Library/Security/
+  sudo chmod -R o+rw /Library/Security/PolicyBanner.rtfd
 }
 
 create_users() {
