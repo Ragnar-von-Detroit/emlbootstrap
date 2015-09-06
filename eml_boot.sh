@@ -184,8 +184,8 @@ system_setup() {
   sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
 
   #sleep security
-  sudo /usr/bin/defaults write com.apple.screensaver askForPassword 1
-  sudo /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
+  /usr/bin/defaults write com.apple.screensaver askForPassword 1
+  /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
 
   #Turn on Remote Desktop control with full access for Admin account only.
   style_text explain "Setting up ARD access for $USER"
