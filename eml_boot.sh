@@ -184,8 +184,8 @@ system_setup() {
   sudo /usr/sbin/systemsetup -setwakeonnetworkaccess on
 
   #sleep security
-  /usr/bin/defaults write com.apple.screensaver askForPassword 1
-  /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
+  sudo /usr/bin/defaults write com.apple.screensaver askForPassword 1
+  sudo /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
 
   #Turn on Remote Desktop control with full access for Admin account only.
   style_text explain "Setting up ARD access for $USER"
@@ -287,6 +287,22 @@ system_defaults() {
 
   #Show all filename extensions in Finder by default
   sudo defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+}
+
+configure_login_window() {
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
+  "Welcome to the English Media Lab. Login information is available on the white board or \
+  from the EML Technician. By logging in you agree to abide by the Lab Computer Guidelines. \
+  Please ask the EML Technician for any assistance."
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
+  sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
+  #set loginwindow to use screensaver we just installed
+  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowIdleTime 15
+  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowModulePath "/System/Library/Screen Savers/Arabesque.qtz"
+  #set PolicyBanner
+  sudo cp -R ./PolicyBanner.rtfd /Library/Security/
+  sudo chmod -R o+rw /Library/Security/PolicyBanner.rtfd
 }
 
 #this is a bit hacky. We want a custom eml login screen saver. OS x only
