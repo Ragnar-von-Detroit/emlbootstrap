@@ -410,3 +410,5 @@ main() {
   configure_login_window
   create_users
 }
+
+main
