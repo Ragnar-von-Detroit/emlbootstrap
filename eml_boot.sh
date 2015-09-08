@@ -175,6 +175,14 @@ system_setup() {
   | cut -d " " -f 6,7 \
   | sed 's/"//g')
 
+  style_text explain "Please type computer name [eg EML0011]"
+
+  read compname
+
+  sudo scutil --set ComputerName "$compname"
+  sudo scutil --set LocalHostName "$compname"
+  sudo scutil --set Hostname "$compname"
+
   style_text explain "Setting up computer for Admin management..."
 
   #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
@@ -298,9 +306,10 @@ custom_screensaver_desktop() {
   sudo chmod 644 /System/Library/Screen\ Savers/Arabesque.qtz
   # Set a custom wallpaper image. `DefaultDesktop.jpg` is already a symlink, and
   # all wallpapers are in `/Library/Desktop Pictures/`. The default is `Wave.jpg`.
+  sudo cp ./eml_desktop.jpg /Library/Desktop\ Pictures/
   rm -rf ~/Library/Application Support/Dock/desktoppicture.db
   sudo rm -rf /System/Library/CoreServices/DefaultDesktop.jpg
-  sudo ln -s ./eml_desktop.jpg /System/Library/CoreServices/DefaultDesktop.jpg
+  sudo ln -s /Library/Desktop\ Pictures/eml_desktop.jpg /System/Library/CoreServices/DefaultDesktop.jpg
 }
 
 configure_login_window() {
@@ -382,12 +391,22 @@ create_users() {
 
 }
 
-intro
-create_bash_profile_bashrc
-install_homebrew
-install_cask
-system_setup
-system_defaults
-custom_screensaver_desktop
-configure_login_window
-create_users
+main() {
+  #Before we start. Check if we have admin privileges
+  declare -ir in_admin="$(/usr/bin/dscl /Search read /Groups/admin GroupMembership | /usr/bin/grep -c $USER)"
+  [ "$in_admin" != 1 ] \
+  && style_text error "This script requires admin access, you're logged in as $USER!" \
+  && exit 1
+
+  intro
+  read -p "Continue? [Press Enter]"
+
+  create_bash_profile_bashrc
+  install_homebrew
+  install_cask
+  system_setup
+  system_defaults
+  custom_screensaver_desktop
+  configure_login_window
+  create_users
+}
