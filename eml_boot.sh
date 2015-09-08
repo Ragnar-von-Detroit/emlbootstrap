@@ -402,10 +402,10 @@ base_brew_cask_install() {
                      scratch spectacle text-wrangler twine unrarx vagrant \
                      virtualbox vlc xact xquartz)
 
-  style_text explain "Using homebrew to install ${brewinstall[@]}"
+  style_text explain "Using homebrew to install "${brewinstall[@]}""
   brew install "${brewinstall[@]}"
 
-  style_text explain "Using cask to install ${brewinstall[@]}"
+  style_text explain "Using cask to install "${caskinstall[@]}""
   brew cask install "${caskinstall[@]}"
 }
 
@@ -428,6 +428,9 @@ main() {
   configure_login_window
   create_users
   base_brew_cask_install
+
+  style_text warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  style_text warn "You need to at the very least log out but should restart now."
 }
 
 main
