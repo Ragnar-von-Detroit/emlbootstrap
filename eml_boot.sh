@@ -181,7 +181,7 @@ system_setup() {
 
   sudo scutil --set ComputerName "$compname"
   sudo scutil --set LocalHostName "$compname"
-  sudo scutil --set Hostname "$compname"
+  sudo scutil --set HostName "$compname"
 
   style_text explain "Setting up computer for Admin management..."
 
