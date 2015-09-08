@@ -242,7 +242,7 @@ system_setup() {
   fi
 }
 
-#Do system wide defaults here. Per user defaults happen when we create user accounts
+#Do system wide defaults here
 system_defaults() {
   style_text explain "Disabling Spotlight indexing for any volume that gets mounted and has not yet been indexed before."
   sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
@@ -304,6 +304,7 @@ custom_screensaver_desktop() {
   sudo chown root /System/Library/Screen\ Savers/Arabesque.qtz
   sudo chgrp wheel /System/Library/Screen\ Savers/Arabesque.qtz
   sudo chmod 644 /System/Library/Screen\ Savers/Arabesque.qtz
+
   # Set a custom wallpaper image. `DefaultDesktop.jpg` is already a symlink, and
   # all wallpapers are in `/Library/Desktop Pictures/`. The default is `Wave.jpg`.
   sudo cp ./eml_desktop.jpg /Library/Desktop\ Pictures/
@@ -330,14 +331,14 @@ configure_login_window() {
 
 create_users() {
   #Check for highest UniqueID and for Staff GroupID for Standard Users.
-  declare -ir lastid=$(/usr/bin/dscl . -list /Users UniqueID | awk '{print $2}' | sort -n | tail -1)
+  local lastid=$(/usr/bin/dscl . -list /Users UniqueID | awk '{print $2}' | sort -n | tail -1)
   #Staff GroupID is almost certainly 20 but why guess?
-  declare -ir staffgid=$(/usr/bin/dscl . -read /Groups/staff PrimaryGroupID | cut -d " " -f 2)
+  local -ir staffgid=$(/usr/bin/dscl . -read /Groups/staff PrimaryGroupID | cut -d " " -f 2)
   #Array of EML default users (besides EML Admin)
-  declare -ar defusers=("Student" "Filmtech" "Instructor")
+  local -ar defusers=("Student" "Filmtech" "Instructor")
   #DON'T escape spaces in paths for dscl!
   #Admin picture is Whiterose.tif, student is Golf.tif, Filmtech is Medal.tif, Instructor is Red Rose.tif
-  declare -ar userpictures=("/Library/User Pictures/Sports/Golf.tif" "/Library/User Pictures/Fun/Medal.tif" "/Library/User Pictures/Flowers/Red Rose.tif")
+  local -ar userpictures=("/Library/User Pictures/Sports/Golf.tif" "/Library/User Pictures/Fun/Medal.tif" "/Library/User Pictures/Flowers/Red Rose.tif")
 
   #createuser wants $1 USERNAME, $2 UNIQUEID, $3 USERPICTURE
   create_user() {
@@ -391,9 +392,26 @@ create_users() {
 
 }
 
+#here we define and install a basic list of apps to install through brew
+#and cask.
+base_brew_cask_install() {
+  local brewinstall=(archey dockutil coreutils ffmpeg imagemagick rsnapshot \
+                     sox tmux tree wget)
+  local caskinstall=(atom audacity google-chrome grandperspective handbrake \
+                     keka macdown mpeg-streamclip pd-extended processing \
+                     scratch spectacle text-wrangler twine unrarx vagrant \
+                     virtualbox vlc xact xquartz)
+
+  style_text explain "Using homebrew to install ${brewinstall[@]}"
+  brew install "${brewinstall[@]}"
+
+  style_text explain "Using cask to install ${brewinstall[@]}"
+  brew cask install "${caskinstall[@]}"
+}
+
 main() {
   #Before we start. Check if we have admin privileges
-  declare -ir in_admin="$(/usr/bin/dscl /Search read /Groups/admin GroupMembership | /usr/bin/grep -c $USER)"
+  local in_admin="$(/usr/bin/dscl /Search read /Groups/admin GroupMembership | /usr/bin/grep -c $USER)"
   [ "$in_admin" != 1 ] \
   && style_text error "This script requires admin access, you're logged in as $USER!" \
   && exit 1
@@ -409,6 +427,7 @@ main() {
   custom_screensaver_desktop
   configure_login_window
   create_users
+  base_brew_cask_install
 }
 
 main
