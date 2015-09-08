@@ -289,13 +289,18 @@ system_defaults() {
   sudo defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 }
 
-custom_screensaver() {
+custom_screensaver_desktop() {
   sudo mv /System/Library/Screen\ Savers/Arabesque.qtz /System/Library/Screen\ Savers/backup.arabesque.qtz
   sudo cp ./eml_screensaver.qtz /System/Library/Screen\ Savers/
   sudo mv /System/Library/Screen\ Savers/eml_screensaver.qtz /System/Library/Screen\ Savers/Arabesque.qtz
   sudo chown root /System/Library/Screen\ Savers/Arabesque.qtz
   sudo chgrp wheel /System/Library/Screen\ Savers/Arabesque.qtz
   sudo chmod 644 /System/Library/Screen\ Savers/Arabesque.qtz
+  # Set a custom wallpaper image. `DefaultDesktop.jpg` is already a symlink, and
+  # all wallpapers are in `/Library/Desktop Pictures/`. The default is `Wave.jpg`.
+  rm -rf ~/Library/Application Support/Dock/desktoppicture.db
+  sudo rm -rf /System/Library/CoreServices/DefaultDesktop.jpg
+  sudo ln -s ./eml_desktop.jpg /System/Library/CoreServices/DefaultDesktop.jpg
 }
 
 configure_login_window() {
@@ -377,19 +382,12 @@ create_users() {
 
 }
 
-
-# Set a custom wallpaper image. `DefaultDesktop.jpg` is already a symlink, and
-# all wallpapers are in `/Library/Desktop Pictures/`. The default is `Wave.jpg`.
-#rm -rf ~/Library/Application Support/Dock/desktoppicture.db
-#sudo rm -rf /System/Library/CoreServices/DefaultDesktop.jpg
-#sudo ln -s /path/to/your/image /System/Library/CoreServices/DefaultDesktop.jpg
-
 intro
 create_bash_profile_bashrc
 install_homebrew
 install_cask
 system_setup
 system_defaults
-custom_screensaver
+custom_screensaver_desktop
 configure_login_window
 create_users
