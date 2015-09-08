@@ -59,10 +59,8 @@ Here's what it does:
 • Create Student, FilmTech, and Instructor as Standard Users.
   Be sure to have the standard passwords ready.
 • Install some basic Homebrew and Cask tools that should be on each machine.
-• Use dockutil (installed in the previous step) to set up docks.
 • Install EML configurations for the dock and rsnapshot, controlled through
-  launchd configurations. These are part of this repository.
-• Set system wide defaults and program configurations.
+  launchd configurations. These are part of this repository. (EVENTUALLY)
 
 This script needs to be run as EML Admin. It will make a basic minimum provision
 of the computer for you so that it is ready for Ansible management
@@ -343,7 +341,6 @@ create_users() {
   #createuser wants $1 USERNAME, $2 UNIQUEID, $3 USERPICTURE
   create_user() {
     local userpath=/Users/"$1"
-    #Convert first letter of username to Uppercase. This is just for Real Name key, which is what shows up on login screen. (eg. Instructor)
     local username="$1"
     sudo /usr/bin/dscl . -create "$userpath"
     sudo /usr/bin/dscl . -create "$userpath" UserShell /bin/bash
