@@ -8,7 +8,7 @@ Todo:
   - [x] Write Security Banner install script
 - [x] Media Lab quartz composer screensaver
   - [x] Install script for the screen saver and enable during login screen
-  - [x] Install for all users and set timeouts & lockout
+  - [ ] Install for all users and set timeouts & lockout -> how to do this?
 - [x] Disable icloud signin on first login to all accounts.
 - [ ] Install customized rsnapshot.conf for 'hazel-ish' cleaning + launchd 
 - [ ] Install dockutil script + lauchnd 
