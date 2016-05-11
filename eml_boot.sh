@@ -3,7 +3,7 @@
 declare -xr osx_vers=$(sw_vers -productVersion | awk -F. '{print $2}')
 declare -xr sw_vers=$(sw_vers -productVersion)
 
-#colours for warnings
+#OUTPUT STYLING
 style_text() {
   RESTORE='\033[0m'
 
@@ -35,19 +35,19 @@ style_text() {
       printf "${UNDY}%s${RESTORE}\n\n" "$2"
       ;;
     *)
-      echo "print_status error. No color. What the else?"
+      echo "'print_status' error. You didn't give me a colour."
   esac
 }
 
 intro() {
-read -d '' yell <<EOF
+read -r -d '' Printro <<EOF
 EML BOOTSTRAP INTRO
-===================
+================================================================================
 
 This is the bootstrap script for the English Media Lab.
 
-This script should be run on a fresh install only, though there are checks
-in it, so nothing should be overwritten.
+This script should be run on a fresh install only. We do check before
+overwriting but don't trust us.
 
 Here's what it does:
 • Install and set up Homebrew and Homebrew Cask.
@@ -67,9 +67,9 @@ of the computer for you so that it is ready for Ansible management
 from the EML Tech machine.
 
 You should reboot after this script is finished.
-------------------------------------------------
+--------------------------------------------------------------------------------
 EOF
-style_text highlight "${yell}"
+style_text highlight "${Printro}"
 }
 
 #Most admin tasks are performed by Ansible which does not use a login shell.
@@ -95,15 +95,18 @@ create_bash_profile_bashrc() {
 #Source .bashrc, installed by EML Bootstrap script.
 #Interactive non-login for Anisible management of brew and cask.
 if [ -f ~/.bashrc ]; then
-   source ~/.bashrc
+    source ~/.bashrc
 fi
 EOF
   fi
 }
 
-install_homebrew() {
+install_homebrew_and_cask() {
   local brew_path="export PATH=/usr/local/bin:$PATH"
   local find_brew
+  local brew_installed
+  local cask_appdir="export HOMEBREW_CASK_OPTS=\"--appdir=/Applications\""
+
   find_brew=$(type brew >/dev/null 2>&1)
   brew_installed=$?
 
@@ -118,6 +121,15 @@ install_homebrew() {
     fi
   }
 
+  check_cask_options() {
+  if grep -q "$cask_appdir" $HOME/.bashrc ; then
+    style_text error "Cask options are already in .bashrc. Skipping."
+  else
+    style_text explain "Changing default Cask symlink location to /Applications in .bashrc"
+    echo "$cask_appdir" >> $HOME/.bashrc
+  fi
+  }
+
   if [[ "$brew_installed" -eq 0 ]]; then
     style_text warn "Brew is alread installed. Skipping installation."
     echo " "
@@ -130,39 +142,16 @@ install_homebrew() {
     /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     check_brew_path
   fi
-}
 
-install_cask() {
-  local cask_appdir="export HOMEBREW_CASK_OPTS=\"--appdir=/Applications\""
-  local find_cask
-  #cask is a module of brew, not a full blow command, so we can't `type` it...
-  find_cask=$(brew cask -h >/dev/null 2>&1)
-  cask_installed=$?
-
-  style_text explain "Trying to install Homebrew Cask"
-
-  # Make sure Cask symlinks to /Applications rather than ~/Applications.
-  # This way we can ensure the all gui programs are accessible for all users, including our standard accounts.
-  check_cask_options() {
-  if grep -q "$cask_appdir" $HOME/.bashrc ; then
-    style_text error "Cask options are already in .bashrc. Skipping."
+  #Install cask. We used to check if cask had been installed but now simply
+  #calling `brew cask` installs (taps) it. Instead just double check that brew
+  #installed to avoid confusing output.
+  if [[ "$brew_installed" -eq 0 ]]; then
+    style_text "Installing Cask."
+    brew cask
+    check_cask_options
   else
-    style_text explain "Changing default Cask symlink location to /Applications in .bashrc"
-    echo "$cask_appdir" >> $HOME/.bashrc
-  fi
-  }
-
-  if [[ "$cask_installed" -eq 0 ]]; then
-    style_text warn "Cask is already installed. Skipping installation."
-    echo " "
-    read -r -p "Would you like to set the Cask appdir option to install casks to /Applications? [Y/N]"
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-      check_cask_options
-    fi
-  else
-      style_text explain "Installing Cask. Will require root."
-      /usr/local/bin/brew install caskroom/cask/brew-cask
-      check_cask_options
+    style_text error "Homebrew isn't installed. I don't know what you're doing."
   fi
 }
 
@@ -242,32 +231,32 @@ system_setup() {
 
 #Do system wide defaults here
 system_defaults() {
-  style_text explain "Disabling Spotlight indexing for any volume that gets mounted and has not yet been indexed before."
-  sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
-
-  style_text explain "Changing indexing order and disable some search results in Spotlight"
-  sudo defaults write com.apple.spotlight orderedItems -array \
-      '{"enabled" = 1;"name" = "APPLICATIONS";}' \
-      '{"enabled" = 1;"name" = "SYSTEM_PREFS";}' \
-      '{"enabled" = 1;"name" = "DIRECTORIES";}' \
-      '{"enabled" = 1;"name" = "PDF";}' \
-      '{"enabled" = 1;"name" = "FONTS";}' \
-      '{"enabled" = 0;"name" = "DOCUMENTS";}' \
-      '{"enabled" = 0;"name" = "MESSAGES";}' \
-      '{"enabled" = 0;"name" = "CONTACT";}' \
-      '{"enabled" = 0;"name" = "EVENT_TODO";}' \
-      '{"enabled" = 0;"name" = "IMAGES";}' \
-      '{"enabled" = 0;"name" = "BOOKMARKS";}' \
-      '{"enabled" = 0;"name" = "MUSIC";}' \
-      '{"enabled" = 0;"name" = "MOVIES";}' \
-      '{"enabled" = 0;"name" = "PRESENTATIONS";}' \
-      '{"enabled" = 0;"name" = "SPREADSHEETS";}' \
-  # Load new settings before rebuilding the index
-  killall mds > /dev/null 2>&1
-  # Make sure indexing is enabled for the main volume
-  sudo mdutil -i on / > /dev/null
-  # Rebuild the index from scratch
-  sudo mdutil -E / > /dev/null
+  # style_text explain "Disabling Spotlight indexing for any volume that gets mounted and has not yet been indexed before."
+  # sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
+  #
+  # style_text explain "Changing indexing order and disable some search results in Spotlight"
+  # sudo defaults write com.apple.spotlight orderedItems -array \
+  #     '{"enabled" = 1;"name" = "APPLICATIONS";}' \
+  #     '{"enabled" = 1;"name" = "SYSTEM_PREFS";}' \
+  #     '{"enabled" = 1;"name" = "DIRECTORIES";}' \
+  #     '{"enabled" = 1;"name" = "PDF";}' \
+  #     '{"enabled" = 1;"name" = "FONTS";}' \
+  #     '{"enabled" = 0;"name" = "DOCUMENTS";}' \
+  #     '{"enabled" = 0;"name" = "MESSAGES";}' \
+  #     '{"enabled" = 0;"name" = "CONTACT";}' \
+  #     '{"enabled" = 0;"name" = "EVENT_TODO";}' \
+  #     '{"enabled" = 0;"name" = "IMAGES";}' \
+  #     '{"enabled" = 0;"name" = "BOOKMARKS";}' \
+  #     '{"enabled" = 0;"name" = "MUSIC";}' \
+  #     '{"enabled" = 0;"name" = "MOVIES";}' \
+  #     '{"enabled" = 0;"name" = "PRESENTATIONS";}' \
+  #     '{"enabled" = 0;"name" = "SPREADSHEETS";}' \
+  # # Load new settings before rebuilding the index
+  # killall mds > /dev/null 2>&1
+  # # Make sure indexing is enabled for the main volume
+  # sudo mdutil -i on / > /dev/null
+  # # Rebuild the index from scratch
+  # sudo mdutil -E / > /dev/null
 
   style_text explain "Disabling system-wide resume"
   sudo defaults write com.apple.systempreferences NSQuitAlwaysKeepsWindows -bool false
@@ -335,8 +324,8 @@ create_users() {
   #Array of EML default users (besides EML Admin)
   local -ar defusers=("Student" "Filmtech" "Instructor")
   #DON'T escape spaces in paths for dscl!
-  #Admin picture is Whiterose.tif, student is Golf.tif, Filmtech is Medal.tif, Instructor is Red Rose.tif
-  local -ar userpictures=("/Library/User Pictures/Sports/Golf.tif" "/Library/User Pictures/Fun/Medal.tif" "/Library/User Pictures/Flowers/Red Rose.tif")
+  #Admin picture is Whiterose.tif, student is Tennis.png, Filmtech is Golf.png, Instructor is 8ball.png
+  local -ar userpictures=("/Library/User Pictures/Sports/Tennis.png" "/Library/User Pictures/Fun/Golf.png" "/Library/User Pictures/Flowers/8ball.png")
 
   #createuser wants $1 USERNAME, $2 UNIQUEID, $3 USERPICTURE
   create_user() {
@@ -376,7 +365,7 @@ create_users() {
     local uniqueid="$((lastid + index + 1))" #+1 to not overwrite the LASTID on the 0 index of the array.
     local username="${defusers[$i]}"
     local userpicture="${userpictures[$i]}"
-    #Don't create Student and Instructor accounts if they already exist. Warning! We only check for
+    #Don't create Student and Instructor accounts if they already exist. We only check for
     #Users in standard OSX location /Users/!
     if [[ $(/usr/bin/dscl . list /Users | grep -ci "$username") -eq 0 ]]; then
       style_text explain "User "\"$username\"" does not currently exist. making "\"$username\"" account now!"
@@ -417,8 +406,7 @@ main() {
   read -p "Continue? [Press Enter]"
 
   create_bash_profile_bashrc
-  install_homebrew
-  install_cask
+  install_homebrew_and_cask
   system_setup
   system_defaults
   custom_screensaver_desktop
