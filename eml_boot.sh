@@ -101,59 +101,59 @@ EOF
   fi
 }
 
-install_homebrew_and_cask() {
-  local brew_path="export PATH=/usr/local/bin:$PATH"
-  local find_brew
-  local brew_installed
-  local cask_appdir="export HOMEBREW_CASK_OPTS=\"--appdir=/Applications\""
-
-  find_brew=$(type brew >/dev/null 2>&1)
-  brew_installed=$?
-
-  style_text explain "Trying to install Homebrew."
-
-  check_brew_path() {
-    if grep -q '^export\sPATH=/usr/local/bin' $HOME/.bashrc ; then
-      style_text error "Brew path is already in .bashrc. Skiping."
-    else
-      style_text explain "Fixing brew path in ~/.bashrc"
-      echo "$brew_path" >> $HOME/.bashrc
-    fi
-  }
-
-  check_cask_options() {
-  if grep -q "$cask_appdir" $HOME/.bashrc ; then
-    style_text error "Cask options are already in .bashrc. Skipping."
-  else
-    style_text explain "Changing default Cask symlink location to /Applications in .bashrc"
-    echo "$cask_appdir" >> $HOME/.bashrc
-  fi
-  }
-
-  if [[ "$brew_installed" -eq 0 ]]; then
-    style_text warn "Brew is alread installed. Skipping installation."
-    echo " "
-    read -r -p "Would you like to fix the PATH in your ~/.bashrc? [Y/N] "
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-      check_brew_path
-    fi
-  else
-    style_text explain "Installing Homebrew. Follow the prompts. Requires root. You'll be asked to install Command Line Tools. Allow it."
-    /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    check_brew_path
-  fi
-
-  #Install cask. We used to check if cask had been installed but now simply
-  #calling `brew cask` installs (taps) it. Instead just double check that brew
-  #installed to avoid confusing output.
-  if [[ "$brew_installed" -eq 0 ]]; then
-    style_text "Installing Cask."
-    brew cask
-    check_cask_options
-  else
-    style_text error "Homebrew isn't installed. I don't know what you're doing."
-  fi
-}
+# install_homebrew_and_cask() {
+#   local brew_path="export PATH=/usr/local/bin:$PATH"
+#   local find_brew
+#   local brew_installed
+#   local cask_appdir="export HOMEBREW_CASK_OPTS=\"--appdir=/Applications\""
+#
+#   find_brew=$(type brew >/dev/null 2>&1)
+#   brew_installed=$?
+#
+#   style_text explain "Trying to install Homebrew."
+#
+#   check_brew_path() {
+#     if grep -q '^export\sPATH=/usr/local/bin' $HOME/.bashrc ; then
+#       style_text error "Brew path is already in .bashrc. Skiping."
+#     else
+#       style_text explain "Fixing brew path in ~/.bashrc"
+#       echo "$brew_path" >> $HOME/.bashrc
+#     fi
+#   }
+#
+#   check_cask_options() {
+#   if grep -q "$cask_appdir" $HOME/.bashrc ; then
+#     style_text error "Cask options are already in .bashrc. Skipping."
+#   else
+#     style_text explain "Changing default Cask symlink location to /Applications in .bashrc"
+#     echo "$cask_appdir" >> $HOME/.bashrc
+#   fi
+#   }
+#
+#   if [[ "$brew_installed" -eq 0 ]]; then
+#     style_text warn "Brew is alread installed. Skipping installation."
+#     echo " "
+#     read -r -p "Would you like to fix the PATH in your ~/.bashrc? [Y/N] "
+#     if [[ $REPLY =~ ^[Yy]$ ]]; then
+#       check_brew_path
+#     fi
+#   else
+#     style_text explain "Installing Homebrew. Follow the prompts. Requires root. You'll be asked to install Command Line Tools. Allow it."
+#     /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+#     check_brew_path
+#   fi
+#
+#   #Install cask. We used to check if cask had been installed but now simply
+#   #calling `brew cask` installs (taps) it. Instead just double check that brew
+#   #installed to avoid confusing output.
+#   if [[ "$brew_installed" -eq 0 ]]; then
+#     style_text "Installing Cask."
+#     brew cask
+#     check_cask_options
+#   else
+#     style_text error "Homebrew isn't installed. I don't know what you're doing."
+#   fi
+# }
 
 system_setup() {
   declare -r bakdate=$(/bin/date -j +%d.%m.%y)
@@ -325,7 +325,7 @@ create_users() {
   local -ar defusers=("student" "filmtech" "instructor")
   #DON'T escape spaces in paths for dscl!
   #Admin picture is Whiterose.tif, student is Tennis.png, Filmtech is Golf.png, Instructor is 8ball.png
-  local -ar userpictures=("/Library/User Pictures/Sports/Tennis.png" "/Library/User Pictures/Fun/Golf.png" "/Library/User Pictures/Flowers/8ball.png")
+  local -ar userpictures=("/Library/User Pictures/Sports/Tennis.png" "/Library/User Pictures/Sports/Golf.png" "/Library/User Pictures/Sports/8ball.png")
 
   #createuser wants $1 USERNAME, $2 UNIQUEID, $3 USERPICTURE
   create_user() {
@@ -382,20 +382,20 @@ create_users() {
 
 #here we define and install a basic list of apps to install through brew
 #and cask.
-base_brew_cask_install() {
-  local brewinstall=(archey dockutil coreutils ffmpeg imagemagick rsnapshot \
-                     sox tmux tree wget)
-  local caskinstall=(atom audacity google-chrome grandperspective handbrake \
-                     keka macdown mpeg-streamclip pd-extended processing \
-                     scratch spectacle text-wrangler twine unrarx vagrant \
-                     virtualbox vlc xact xquartz)
-
-  style_text explain "Using homebrew to install "${brewinstall[@]}""
-  brew install "${brewinstall[@]}"
-
-  style_text explain "Using cask to install "${caskinstall[@]}""
-  brew cask install "${caskinstall[@]}"
-}
+# base_brew_cask_install() {
+#   local brewinstall=(archey dockutil coreutils ffmpeg imagemagick rsnapshot \
+#                      sox tmux tree wget)
+#   local caskinstall=(atom audacity google-chrome grandperspective handbrake \
+#                      keka macdown mpeg-streamclip pd-extended processing \
+#                      scratch spectacle text-wrangler twine unrarx vagrant \
+#                      virtualbox vlc xact xquartz)
+#
+#   style_text explain "Using homebrew to install "${brewinstall[@]}""
+#   brew install "${brewinstall[@]}"
+#
+#   style_text explain "Using cask to install "${caskinstall[@]}""
+#   brew cask install "${caskinstall[@]}"
+# }
 
 main() {
   #Before we start. Check if we have admin privileges
@@ -408,13 +408,13 @@ main() {
   read -p "Continue? [Press Enter]"
 
   create_bash_profile_bashrc
-  install_homebrew_and_cask
+  # install_homebrew_and_cask
   system_setup
   system_defaults
   custom_screensaver_desktop
   configure_login_window
   create_users
-  base_brew_cask_install
+  # base_brew_cask_install
 
   style_text warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
   style_text warn "You need to at the very least log out but should restart now."
