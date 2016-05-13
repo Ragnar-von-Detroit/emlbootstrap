@@ -322,7 +322,7 @@ create_users() {
   #Staff GroupID is almost certainly 20 but why guess?
   local -ir staffgid=$(/usr/bin/dscl . -read /Groups/staff PrimaryGroupID | cut -d " " -f 2)
   #Array of EML default users (besides EML Admin)
-  local -ar defusers=("student" "filmtech" "instructor")
+  local -ar defusers=("Student" "Filmtech" "Instructor")
   #DON'T escape spaces in paths for dscl!
   #Admin picture is Whiterose.tif, student is Tennis.png, Filmtech is Golf.png, Instructor is 8ball.png
   local -ar userpictures=("/Library/User Pictures/Sports/Tennis.png" "/Library/User Pictures/Sports/Golf.png" "/Library/User Pictures/Sports/8ball.png")
@@ -331,11 +331,10 @@ create_users() {
   create_user() {
     local userpath=/Users/"$1"
     local username="$1"
-    local realnameupper=$(echo "$1" | /usr/bin/perl -pe 's/\S+/\u$&/g')
 
     sudo /usr/bin/dscl . -create "$userpath"
     sudo /usr/bin/dscl . -create "$userpath" UserShell /bin/bash
-    sudo /usr/bin/dscl . -create "$userpath" RealName "$realnameupper"
+    sudo /usr/bin/dscl . -create "$userpath" RealName "$username"
     sudo /usr/bin/dscl . -create "$userpath" UniqueID "$2"
     sudo /usr/bin/dscl . -create "$userpath" PrimaryGroupID "$staffgid"
     sudo /usr/bin/dscl . -create "$userpath" NFSHomeDirectory "$userpath"
