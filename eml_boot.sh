@@ -101,59 +101,59 @@ EOF
   fi
 }
 
-# install_homebrew_and_cask() {
-#   local brew_path="export PATH=/usr/local/bin:$PATH"
-#   local find_brew
-#   local brew_installed
-#   local cask_appdir="export HOMEBREW_CASK_OPTS=\"--appdir=/Applications\""
-#
-#   find_brew=$(type brew >/dev/null 2>&1)
-#   brew_installed=$?
-#
-#   style_text explain "Trying to install Homebrew."
-#
-#   check_brew_path() {
-#     if grep -q '^export\sPATH=/usr/local/bin' $HOME/.bashrc ; then
-#       style_text error "Brew path is already in .bashrc. Skiping."
-#     else
-#       style_text explain "Fixing brew path in ~/.bashrc"
-#       echo "$brew_path" >> $HOME/.bashrc
-#     fi
-#   }
-#
-#   check_cask_options() {
-#   if grep -q "$cask_appdir" $HOME/.bashrc ; then
-#     style_text error "Cask options are already in .bashrc. Skipping."
-#   else
-#     style_text explain "Changing default Cask symlink location to /Applications in .bashrc"
-#     echo "$cask_appdir" >> $HOME/.bashrc
-#   fi
-#   }
-#
-#   if [[ "$brew_installed" -eq 0 ]]; then
-#     style_text warn "Brew is alread installed. Skipping installation."
-#     echo " "
-#     read -r -p "Would you like to fix the PATH in your ~/.bashrc? [Y/N] "
-#     if [[ $REPLY =~ ^[Yy]$ ]]; then
-#       check_brew_path
-#     fi
-#   else
-#     style_text explain "Installing Homebrew. Follow the prompts. Requires root. You'll be asked to install Command Line Tools. Allow it."
-#     /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-#     check_brew_path
-#   fi
-#
-#   #Install cask. We used to check if cask had been installed but now simply
-#   #calling `brew cask` installs (taps) it. Instead just double check that brew
-#   #installed to avoid confusing output.
-#   if [[ "$brew_installed" -eq 0 ]]; then
-#     style_text "Installing Cask."
-#     brew cask
-#     check_cask_options
-#   else
-#     style_text error "Homebrew isn't installed. I don't know what you're doing."
-#   fi
-# }
+install_homebrew_and_cask() {
+  local brew_path="export PATH=/usr/local/bin:$PATH"
+  local find_brew
+  local brew_installed
+  local cask_appdir="export HOMEBREW_CASK_OPTS=\"--appdir=/Applications\""
+
+  find_brew=$(type brew >/dev/null 2>&1)
+  brew_installed=$?
+
+  style_text explain "Trying to install Homebrew."
+
+  check_brew_path() {
+    if grep -q '^export\sPATH=/usr/local/bin' $HOME/.bashrc ; then
+      style_text error "Brew path is already in .bashrc. Skiping."
+    else
+      style_text explain "Fixing brew path in ~/.bashrc"
+      echo "$brew_path" >> $HOME/.bashrc
+    fi
+  }
+
+  check_cask_options() {
+  if grep -q "$cask_appdir" $HOME/.bashrc ; then
+    style_text error "Cask options are already in .bashrc. Skipping."
+  else
+    style_text explain "Changing default Cask symlink location to /Applications in .bashrc"
+    echo "$cask_appdir" >> $HOME/.bashrc
+  fi
+  }
+
+  if [[ "$brew_installed" -eq 0 ]]; then
+    style_text warn "Brew is alread installed. Skipping installation."
+    echo " "
+    read -r -p "Would you like to fix the PATH in your ~/.bashrc? [Y/N] "
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      check_brew_path
+    fi
+  else
+    style_text explain "Installing Homebrew. Follow the prompts. Requires root. You'll be asked to install Command Line Tools. Allow it."
+    /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    check_brew_path
+  fi
+
+  #Install cask. We used to check if cask had been installed but now simply
+  #calling `brew cask` installs (taps) it. Instead just double check that brew
+  #installed to avoid confusing output.
+  if [[ "$brew_installed" -eq 0 ]]; then
+    style_text "Installing Cask."
+    brew cask
+    check_cask_options
+  else
+    style_text error "Homebrew isn't installed. I don't know what you're doing."
+  fi
+}
 
 system_setup() {
   declare -r bakdate=$(/bin/date -j +%d.%m.%y)
@@ -231,32 +231,34 @@ system_setup() {
 
 #Do system wide defaults here
 system_defaults() {
-  # style_text explain "Disabling Spotlight indexing for any volume that gets mounted and has not yet been indexed before."
-  # sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
-  #
-  # style_text explain "Changing indexing order and disable some search results in Spotlight"
-  # sudo defaults write com.apple.spotlight orderedItems -array \
-  #     '{"enabled" = 1;"name" = "APPLICATIONS";}' \
-  #     '{"enabled" = 1;"name" = "SYSTEM_PREFS";}' \
-  #     '{"enabled" = 1;"name" = "DIRECTORIES";}' \
-  #     '{"enabled" = 1;"name" = "PDF";}' \
-  #     '{"enabled" = 1;"name" = "FONTS";}' \
-  #     '{"enabled" = 0;"name" = "DOCUMENTS";}' \
-  #     '{"enabled" = 0;"name" = "MESSAGES";}' \
-  #     '{"enabled" = 0;"name" = "CONTACT";}' \
-  #     '{"enabled" = 0;"name" = "EVENT_TODO";}' \
-  #     '{"enabled" = 0;"name" = "IMAGES";}' \
-  #     '{"enabled" = 0;"name" = "BOOKMARKS";}' \
-  #     '{"enabled" = 0;"name" = "MUSIC";}' \
-  #     '{"enabled" = 0;"name" = "MOVIES";}' \
-  #     '{"enabled" = 0;"name" = "PRESENTATIONS";}' \
-  #     '{"enabled" = 0;"name" = "SPREADSHEETS";}' \
-  # # Load new settings before rebuilding the index
-  # killall mds > /dev/null 2>&1
-  # # Make sure indexing is enabled for the main volume
-  # sudo mdutil -i on / > /dev/null
-  # # Rebuild the index from scratch
-  # sudo mdutil -E / > /dev/null
+  style_text explain "Disabling Spotlight indexing for any volume that gets mounted and has not yet been indexed before."
+  sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
+
+  style_text explain "Changing indexing order and disable some search results in Spotlight"
+  sudo defaults write com.apple.spotlight orderedItems -array \
+      '{"enabled" = 1;"name" = "APPLICATIONS";}' \
+      '{"enabled" = 1;"name" = "SYSTEM_PREFS";}' \
+      '{"enabled" = 1;"name" = "DIRECTORIES";}' \
+      '{"enabled" = 1;"name" = "PDF";}' \
+      '{"enabled" = 1;"name" = "FONTS";}' \
+      '{"enabled" = 1;"name" = "DOCUMENTS";}' \
+      '{"enabled" = 0;"name" = "MESSAGES";}' \
+      '{"enabled" = 0;"name" = "CONTACT";}' \
+      '{"enabled" = 0;"name" = "EVENT_TODO";}' \
+      '{"enabled" = 0;"name" = "IMAGES";}' \
+      '{"enabled" = 0;"name" = "BOOKMARKS";}' \
+      '{"enabled" = 1;"name" = "MUSIC";}' \
+      '{"enabled" = 1;"name" = "MOVIES";}' \
+      '{"enabled" = 1;"name" = "PRESENTATIONS";}' \
+      '{"enabled" = 1;"name" = "SPREADSHEETS";}' \
+      '{"enabled" = 0;"name" = "MENU_OTHER";}'\
+      '{"enabled" = 0;"name" = "MENU_WEBSEARCH";}' \
+  # Load new settings before rebuilding the index
+  killall mds > /dev/null 2>&1
+  # Make sure indexing is enabled for the main volume
+  sudo mdutil -i on / > /dev/null
+  # Rebuild the index from scratch
+  sudo mdutil -E / > /dev/null
 
   style_text explain "Disabling system-wide resume"
   sudo defaults write com.apple.systempreferences NSQuitAlwaysKeepsWindows -bool false
@@ -407,7 +409,7 @@ main() {
   read -p "Continue? [Press Enter]"
 
   create_bash_profile_bashrc
-  # install_homebrew_and_cask
+  install_homebrew_and_cask
   system_setup
   system_defaults
   custom_screensaver_desktop
