@@ -101,6 +101,8 @@ install_homebrew_and_cask() {
   #Install cask. We used to check if cask had been installed but now simply
   #calling `brew cask` installs (taps) it. Instead just double check that brew
   #installed to avoid confusing output.
+  type brew >/dev/null 2>&1
+  brew_installed=$?
   if [[ "$brew_installed" -eq 0 ]]; then
     style_text "Installing Cask."
     brew cask
