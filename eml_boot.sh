@@ -104,7 +104,7 @@ install_homebrew_and_cask() {
   type brew >/dev/null 2>&1
   brew_installed=$?
   if [[ "$brew_installed" -eq 0 ]]; then
-    style_text "Installing Cask."
+    style_text explain "Installing Cask."
     brew cask
     check_cask_options
   else
