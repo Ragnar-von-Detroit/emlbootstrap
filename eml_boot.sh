@@ -54,93 +54,48 @@ Here's what it does:
   This will trigger the install of Command Line Tools from Apple.
   You should allow this.
 • Set up PubkeyAuthentication in sshd_config and install SSH public key.
-  This is for the EML Account only. You'll need to su to the other accounts when
-  logged in or in Ansible playbooks.
 • Create Student, FilmTech, and Instructor as Standard Users.
   Be sure to have the standard passwords ready.
-• Install some basic Homebrew and Cask tools that should be on each machine.
-• Install EML configurations for the dock and rsnapshot, controlled through
-  launchd configurations. These are part of this repository. (EVENTUALLY)
 
 This script needs to be run as EML Admin. It will make a basic minimum provision
 of the computer for you so that it is ready for Ansible management
 from the EML Tech machine.
 
-You should reboot after this script is finished.
+You should reboot or log out and back in after this script is finished.
 --------------------------------------------------------------------------------
 EOF
 style_text highlight "${Printro}"
 }
 
-#Most admin tasks are performed by Ansible which does not use a login shell.
-#Homebrew requires that we set its path in .bash_profile but this is only
-#referenced by login shells and won't work for Anisible.
-#Instead, we set the path in .bashrc and source .bashrc from .bash_profile when
-#we're actually in a logged in shell. Most linux distros use this setup.
-create_bash_profile_bashrc() {
-  if [[ ! -f $HOME/.bashrc ]]; then
-    style_text explain "Creating .bashrc for Ansible management."
-    touch $HOME/.bashrc
-  fi
-  if [[ ! -f $HOME/.bash_profile ]]; then
-    style_text explain "Creating .bash_profile for interactive sessions."
-    touch $HOME/.bash_profile
-  fi
-
-  if grep -q "source ~/.bashrc" $HOME/.bash_profile ; then
-    style_text warn "~/.bashrc already linked in ~/.bash_profile"
-  else
-    style_text explain "Setting .bash_profile to source .bashrc"
-    cat <<EOF >> $HOME/.bash_profile
-#Source .bashrc, installed by EML Bootstrap script.
-#Interactive non-login for Anisible management of brew and cask.
-if [ -f ~/.bashrc ]; then
-    source ~/.bashrc
-fi
-EOF
-  fi
-}
+#El capitan now includes /usr/local/bin in path so we no longer need to create
+#user rc & profile dotfiles. Instead, just put the brew cask appdir var in
+#/etc/bashrc
 
 install_homebrew_and_cask() {
-  local brew_path="export PATH=/usr/local/bin:$PATH"
   local find_brew
   local brew_installed
   local cask_appdir="export HOMEBREW_CASK_OPTS=\"--appdir=/Applications\""
 
-  find_brew=$(type brew >/dev/null 2>&1)
+  type brew >/dev/null 2>&1
   brew_installed=$?
 
   style_text explain "Trying to install Homebrew."
 
-  check_brew_path() {
-    if grep -q '^export\sPATH=/usr/local/bin' $HOME/.bashrc ; then
-      style_text error "Brew path is already in .bashrc. Skiping."
-    else
-      style_text explain "Fixing brew path in ~/.bashrc"
-      echo "$brew_path" >> $HOME/.bashrc
-    fi
-  }
-
   check_cask_options() {
-  if grep -q "$cask_appdir" $HOME/.bashrc ; then
-    style_text error "Cask options are already in .bashrc. Skipping."
-  else
-    style_text explain "Changing default Cask symlink location to /Applications in .bashrc"
-    echo "$cask_appdir" >> $HOME/.bashrc
-  fi
+    style_text explain "Making /Applications the app directory for brew cask"
+    if grep -q "$cask_appdir" /etc/bashrc ; then
+      style_text error "Cask options are already in /etc/bashrc. Skipping."
+    else
+      style_text explain "Changing default Cask symlink location to /Applications in /etc/bashrc"
+      echo "$cask_appdir" | sudo tee -a /etc/bashrc
+    fi
   }
 
   if [[ "$brew_installed" -eq 0 ]]; then
     style_text warn "Brew is alread installed. Skipping installation."
-    echo " "
-    read -r -p "Would you like to fix the PATH in your ~/.bashrc? [Y/N] "
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-      check_brew_path
-    fi
   else
     style_text explain "Installing Homebrew. Follow the prompts. Requires root. You'll be asked to install Command Line Tools. Allow it."
     /usr/bin/ruby -e "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    check_brew_path
   fi
 
   #Install cask. We used to check if cask had been installed but now simply
@@ -151,7 +106,7 @@ install_homebrew_and_cask() {
     brew cask
     check_cask_options
   else
-    style_text error "Homebrew isn't installed. I don't know what you're doing."
+    style_text error "Homebrew isn't installed. Something must have gone wrong."
   fi
 }
 
@@ -391,14 +346,12 @@ main() {
   intro
   read -p "Continue? [Press Enter]"
 
-  create_bash_profile_bashrc
   install_homebrew_and_cask
   system_setup
   system_defaults
   custom_screensaver_desktop
   configure_login_window
   create_users
-  # base_brew_cask_install
 
   style_text warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
   style_text warn "You need to at the very least log out but should restart now."
