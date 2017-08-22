@@ -108,7 +108,7 @@ install_homebrew_and_cask() {
     brew cask
     check_cask_options
   else
-    style_text error "Homebrew isn't installed. Something must have gone wrong."
+    style_text error "Homebrew isn't installed. Something must have gone wrong." && exit 1
   fi
 }
 
