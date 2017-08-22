@@ -79,10 +79,10 @@ install_homebrew_and_cask() {
   type brew >/dev/null 2>&1
   brew_installed=$?
 
-  style_text explain "Trying to install Homebrew."
+  style_text explain "Trying to install Homebrew and Homebrew Cask."
 
   check_cask_options() {
-    style_text explain "Making /Applications the app directory for brew cask"
+    style_text explain "Making /Applications the app directory for brew cask."
     if grep -q "$cask_appdir" /etc/bashrc ; then
       style_text error "Cask options are already in /etc/bashrc. Skipping."
     else
@@ -105,7 +105,7 @@ install_homebrew_and_cask() {
   brew_installed=$?
   if [[ "$brew_installed" -eq 0 ]]; then
     style_text explain "Installing Cask."
-    brew cask
+    brew tap caskroom/cask
     check_cask_options
   else
     style_text error "Homebrew isn't installed. Something must have gone wrong." && exit 1
