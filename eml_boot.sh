@@ -206,7 +206,7 @@ system_setup() {
   -e 's/^#PermitRootLogin .*/PermitRootLogin no/' \
   -e 's/^#PubkeyAuthentication .*/PubkeyAuthentication yes/' \
   -e 's/^#PasswordAuthentication .*/PasswordAuthentication no/' \
-  /etc/sshd_config
+  /etc/ssh/sshd_config
   style_text explain "Created backup /etc/sshd_config at /etc/sshd_config.$bakdate.bak"
 
   #install pub key from github account
@@ -245,7 +245,7 @@ system_defaults() {
       '{"enabled" = 0;"name" = "MESSAGES";}' \
       '{"enabled" = 0;"name" = "CONTACT";}' \
       '{"enabled" = 0;"name" = "EVENT_TODO";}' \
-      '{"enabled" = 0;"name" = "IMAGES";}' \
+      '{"enabled" = 1;"name" = "IMAGES";}' \
       '{"enabled" = 0;"name" = "BOOKMARKS";}' \
       '{"enabled" = 1;"name" = "MUSIC";}' \
       '{"enabled" = 1;"name" = "MOVIES";}' \
@@ -380,23 +380,6 @@ create_users() {
   done
 
 }
-
-#here we define and install a basic list of apps to install through brew
-#and cask.
-# base_brew_cask_install() {
-#   local brewinstall=(archey dockutil coreutils ffmpeg imagemagick rsnapshot \
-#                      sox tmux tree wget)
-#   local caskinstall=(atom audacity google-chrome grandperspective handbrake \
-#                      keka macdown mpeg-streamclip pd-extended processing \
-#                      scratch spectacle text-wrangler twine unrarx vagrant \
-#                      virtualbox vlc xact xquartz)
-#
-#   style_text explain "Using homebrew to install "${brewinstall[@]}""
-#   brew install "${brewinstall[@]}"
-#
-#   style_text explain "Using cask to install "${caskinstall[@]}""
-#   brew cask install "${caskinstall[@]}"
-# }
 
 main() {
   #Before we start. Check if we have admin privileges
