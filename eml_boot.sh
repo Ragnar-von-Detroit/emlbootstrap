@@ -119,13 +119,22 @@ system_setup() {
   | cut -d " " -f 6,7 \
   | sed 's/"//g')
 
-  style_text explain "Please type computer name [eg EML0011]"
+  style_text explain "Please type computer name [eg EML0011]. Do not include .local..."
 
   read compname
 
   sudo scutil --set ComputerName "$compname"
   sudo scutil --set LocalHostName "$compname"
   sudo scutil --set HostName "$compname"
+
+  #I found that the hostname lookup in quartz composer blocked the program for up to 30 seconds.
+  #Reading from a simple xml file is way quicker. All we do is put the xml file in /etc/, make it
+  #readable, and put the provided hostname in the field our screensaver expects
+  #I put a long string of numbers in the target field to make this very easy and safer??
+
+  sed -i.baseversion 's/e5806adcb32a4c0b3ea085d6cebdcb95/'"${compname}"'/' ./eml_hostname.xml
+  sudo cp ./eml_hostname.xml /etc/
+  sudo chmod 744 /etc/eml_hostname.xml
 
   style_text explain "Setting up computer for Admin management..."
 
