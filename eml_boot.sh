@@ -133,8 +133,8 @@ system_setup() {
   #I put a long string of numbers in the target field to make this very easy and safer??
 
   sed -i.baseversion 's/e5806adcb32a4c0b3ea085d6cebdcb95/'"${compname}"'/' ./eml_hostname.xml
-  sudo cp ./eml_hostname.xml /etc/
-  sudo chmod 744 /etc/eml_hostname.xml
+  sudo cp ./eml_hostname.xml /etc/emlstuff/
+  sudo chmod 744 /etc/emlstuff/eml_hostname.xml
 
   style_text explain "Setting up computer for Admin management..."
 
