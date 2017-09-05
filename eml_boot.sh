@@ -3,6 +3,10 @@
 declare -xr osx_vers=$(sw_vers -productVersion | awk -F. '{print $2}')
 declare -xr sw_vers=$(sw_vers -productVersion)
 declare thisCompName
+declare -r publickey=$(curl -fSsl https://api.github.com/users/emltech/keys \
+| grep "key" \
+| cut -d " " -f 6,7 \
+| sed 's/"//g')
 
 #OUTPUT STYLING
 style_text() {
@@ -115,10 +119,6 @@ install_homebrew_and_cask() {
 
 system_setup() {
   declare -r bakdate=$(/bin/date -j +%d.%m.%y)
-  declare -r publickey=$(curl -fSsl https://api.github.com/users/emltech/keys \
-  | grep "key" \
-  | cut -d " " -f 6,7 \
-  | sed 's/"//g')
 
   style_text explain "Please type computer name [eg EML0011]. Do not include .local..."
 
@@ -291,6 +291,20 @@ create_users() {
     sudo mkdir "$userpath"
     style_text explain "Creating ~/ at "\"$userpath\""."
     sudo cp -R /System/Library/User\ Template/English.lproj/ "$userpath"
+    userpublickey=
+    if [ ! -d $userpath/.ssh ]; then
+      sudo mkdir $userpath/.ssh
+    fi
+    if [ ! -f $userpath/.ssh/authorized_keys ]; then
+      sudo touch $userpath.ssh/authorized_keys
+      sudo chmod 600 $userpath/.ssh/authorized_keys
+    fi
+    #check if key in file, once made or found above
+    if grep -q "$publickey" $userpath/.ssh/authorized_keys ; then
+      style_text warn "Public key is already installed in user dir. Skipping."
+    else
+      echo "$publickey" >> $userpath/.ssh/authorized_keys
+    fi
     sudo chown -R "$1":staff "$userpath"
     style_text explain "Finished creating account "\"$1\"" at "\"$userpath\""."
   }
