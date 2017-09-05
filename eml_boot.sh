@@ -2,6 +2,7 @@
 
 declare -xr osx_vers=$(sw_vers -productVersion | awk -F. '{print $2}')
 declare -xr sw_vers=$(sw_vers -productVersion)
+declare thisCompName
 
 #OUTPUT STYLING
 style_text() {
@@ -127,6 +128,7 @@ system_setup() {
   sudo scutil --set LocalHostName "$compname"
   sudo scutil --set HostName "$compname"
 
+  thisCompName="$compname"
   #I found that the hostname lookup in quartz composer blocked the program for up to 30 seconds.
   #Reading from a simple xml file is way quicker. All we do is put the xml file in /etc/, make it
   #readable, and put the provided hostname in the field our screensaver expects
@@ -280,7 +282,6 @@ configure_login_window() {
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWOTHERUSERS_MANAGED False
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
-  #set loginwindow to use screensaver we just installed
   sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowIdleTime 15
   # sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowModulePath "/System/Library/Screen Savers/Arabesque.qtz"
   #set PolicyBanner
@@ -364,7 +365,7 @@ main() {
   install_homebrew_and_cask
   system_setup
   system_defaults
-  custom_screensaver_desktop
+  # custom_screensaver_desktop
   configure_login_window
   create_users
 
