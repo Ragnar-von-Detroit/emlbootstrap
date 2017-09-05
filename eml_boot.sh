@@ -264,6 +264,12 @@ system_defaults() {
 # }
 
 configure_login_window() {
+  # Set a custom wallpaper image. `DefaultDesktop.jpg` is already a symlink, and
+  # all wallpapers are in `/Library/Desktop Pictures/`. The default is `Wave.jpg`.
+  sudo cp ./eml_desktop.jpg /Library/Desktop\ Pictures/
+  rm -rf ~/Library/Application Support/Dock/desktoppicture.db
+  sudo rm -rf /System/Library/CoreServices/DefaultDesktop.jpg
+  sudo ln -s /Library/Desktop\ Pictures/eml_desktop.jpg /System/Library/CoreServices/DefaultDesktop.jpg
   sudo cp ./eml_desktop.png /Library/Caches/
   sudo mv /Library/Caches/eml_desktop.png /Library/Caches/com.apple.desktop.admin.png
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
