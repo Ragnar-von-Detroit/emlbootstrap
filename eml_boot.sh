@@ -246,30 +246,7 @@ system_defaults() {
   sudo defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 }
 
-# System screen savers protected now by SIP. Basically doesn't work.
-# custom_screensaver_desktop() {
-#   sudo mv /System/Library/Screen\ Savers/Arabesque.qtz /System/Library/Screen\ Savers/backup.arabesque.qtz
-#   sudo cp ./eml_screensaver.qtz /System/Library/Screen\ Savers/
-#   sudo mv /System/Library/Screen\ Savers/eml_screensaver.qtz /System/Library/Screen\ Savers/Arabesque.qtz
-#   sudo chown root /System/Library/Screen\ Savers/Arabesque.qtz
-#   sudo chgrp wheel /System/Library/Screen\ Savers/Arabesque.qtz
-#   sudo chmod 644 /System/Library/Screen\ Savers/Arabesque.qtz
-#
-#   # Set a custom wallpaper image. `DefaultDesktop.jpg` is already a symlink, and
-#   # all wallpapers are in `/Library/Desktop Pictures/`. The default is `Wave.jpg`.
-#   sudo cp ./eml_desktop.jpg /Library/Desktop\ Pictures/
-#   rm -rf ~/Library/Application Support/Dock/desktoppicture.db
-#   sudo rm -rf /System/Library/CoreServices/DefaultDesktop.jpg
-#   sudo ln -s /Library/Desktop\ Pictures/eml_desktop.jpg /System/Library/CoreServices/DefaultDesktop.jpg
-# }
-
 configure_login_window() {
-  # Set a custom wallpaper image. `DefaultDesktop.jpg` is already a symlink, and
-  # all wallpapers are in `/Library/Desktop Pictures/`. The default is `Wave.jpg`.
-  sudo cp ./eml_desktop.jpg /Library/Desktop\ Pictures/
-  rm -rf ~/Library/Application Support/Dock/desktoppicture.db
-  sudo rm -rf /System/Library/CoreServices/DefaultDesktop.jpg
-  sudo ln -s /Library/Desktop\ Pictures/eml_desktop.jpg /System/Library/CoreServices/DefaultDesktop.jpg
   sudo cp ./eml_desktop.png /Library/Caches/
   sudo mv /Library/Caches/eml_desktop.png /Library/Caches/com.apple.desktop.admin.png
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
@@ -347,6 +324,10 @@ create_users() {
     fi
   done
 
+  #add all users to ssh
+  dseditgroup -o create -q com.apple.access_ssh
+  dseditgroup -o edit -a admin -t group com.apple.access_ssh
+  dseditgroup -o edit -a staff -t group com.apple.access_ssh
 }
 
 main() {
@@ -362,7 +343,6 @@ main() {
   install_homebrew_and_cask
   system_setup
   system_defaults
-  # custom_screensaver_desktop
   configure_login_window
   create_users
 
