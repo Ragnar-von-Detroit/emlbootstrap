@@ -129,6 +129,7 @@ system_setup() {
   sudo scutil --set HostName "$compname"
 
   thisCompName="$compname"
+
   #I found that the hostname lookup in quartz composer blocked the program for up to 30 seconds.
   #Reading from a simple xml file is way quicker. All we do is put the xml file in /etc/, make it
   #readable, and put the provided hostname in the field our screensaver expects
@@ -272,9 +273,9 @@ system_defaults() {
 # }
 
 configure_login_window() {
-  sudo mv /System/Library/Caches/com.apple.desktop.admin.png /System/Library/Caches/com.apple.desktop.admin.png.bak
-  sudo cp ./eml_desktop.png /System/Library/Caches/
-  sudo mv /System/Library/Caches/eml_desktop.png /System/Library/Caches/com.apple.desktop.admin.png
+  sudo mv /Library/Caches/com.apple.desktop.admin.png /Library/Caches/com.apple.desktop.admin.png.bak
+  sudo cp ./eml_desktop.png /Library/Caches/
+  sudo mv /Library/Caches/eml_desktop.png /Library/Caches/com.apple.desktop.admin.png
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
   "Welcome to the Department of English, Film, and Theatre Media Lab. Login information is available on the white board or \
   from the EML Technician. By logging in you agree to abide by the Lab Computer Guidelines. \
