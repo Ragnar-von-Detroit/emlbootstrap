@@ -130,15 +130,6 @@ system_setup() {
 
   thisCompName="$compname"
 
-  #I found that the hostname lookup in quartz composer blocked the program for up to 30 seconds.
-  #Reading from a simple xml file is way quicker. All we do is put the xml file in /etc/, make it
-  #readable, and put the provided hostname in the field our screensaver expects
-  #I put a long string of numbers in the target field to make this very easy and safer??
-
-  sed -i.baseversion 's/e5806adcb32a4c0b3ea085d6cebdcb95/'"${compname}"'/' ./eml_hostname.xml
-  sudo cp ./eml_hostname.xml /etc/emlstuff/
-  sudo chmod 744 /etc/emlstuff/eml_hostname.xml
-
   style_text explain "Setting up computer for Admin management..."
 
   #set power and sleep schedule, set autorestart after power failure, set wake on network/modem access
@@ -273,11 +264,10 @@ system_defaults() {
 # }
 
 configure_login_window() {
-  sudo mv /Library/Caches/com.apple.desktop.admin.png /Library/Caches/com.apple.desktop.admin.png.bak
   sudo cp ./eml_desktop.png /Library/Caches/
   sudo mv /Library/Caches/eml_desktop.png /Library/Caches/com.apple.desktop.admin.png
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
-  "Welcome to the Department of English, Film, and Theatre Media Lab. Login information is available on the white board or \
+  "Welcome to the Department of English, Film, and Theatre Media Lab. This is computer $thisCompName. Login information is available on the white board or \
   from the EML Technician. By logging in you agree to abide by the Lab Computer Guidelines. \
   Please ask the EML Technician for any assistance."
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
