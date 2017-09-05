@@ -252,25 +252,29 @@ system_defaults() {
   sudo defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 }
 
-custom_screensaver_desktop() {
-  sudo mv /System/Library/Screen\ Savers/Arabesque.qtz /System/Library/Screen\ Savers/backup.arabesque.qtz
-  sudo cp ./eml_screensaver.qtz /System/Library/Screen\ Savers/
-  sudo mv /System/Library/Screen\ Savers/eml_screensaver.qtz /System/Library/Screen\ Savers/Arabesque.qtz
-  sudo chown root /System/Library/Screen\ Savers/Arabesque.qtz
-  sudo chgrp wheel /System/Library/Screen\ Savers/Arabesque.qtz
-  sudo chmod 644 /System/Library/Screen\ Savers/Arabesque.qtz
-
-  # Set a custom wallpaper image. `DefaultDesktop.jpg` is already a symlink, and
-  # all wallpapers are in `/Library/Desktop Pictures/`. The default is `Wave.jpg`.
-  sudo cp ./eml_desktop.jpg /Library/Desktop\ Pictures/
-  rm -rf ~/Library/Application Support/Dock/desktoppicture.db
-  sudo rm -rf /System/Library/CoreServices/DefaultDesktop.jpg
-  sudo ln -s /Library/Desktop\ Pictures/eml_desktop.jpg /System/Library/CoreServices/DefaultDesktop.jpg
-}
+# System screen savers protected now by SIP. Basically doesn't work.
+# custom_screensaver_desktop() {
+#   sudo mv /System/Library/Screen\ Savers/Arabesque.qtz /System/Library/Screen\ Savers/backup.arabesque.qtz
+#   sudo cp ./eml_screensaver.qtz /System/Library/Screen\ Savers/
+#   sudo mv /System/Library/Screen\ Savers/eml_screensaver.qtz /System/Library/Screen\ Savers/Arabesque.qtz
+#   sudo chown root /System/Library/Screen\ Savers/Arabesque.qtz
+#   sudo chgrp wheel /System/Library/Screen\ Savers/Arabesque.qtz
+#   sudo chmod 644 /System/Library/Screen\ Savers/Arabesque.qtz
+#
+#   # Set a custom wallpaper image. `DefaultDesktop.jpg` is already a symlink, and
+#   # all wallpapers are in `/Library/Desktop Pictures/`. The default is `Wave.jpg`.
+#   sudo cp ./eml_desktop.jpg /Library/Desktop\ Pictures/
+#   rm -rf ~/Library/Application Support/Dock/desktoppicture.db
+#   sudo rm -rf /System/Library/CoreServices/DefaultDesktop.jpg
+#   sudo ln -s /Library/Desktop\ Pictures/eml_desktop.jpg /System/Library/CoreServices/DefaultDesktop.jpg
+# }
 
 configure_login_window() {
+  sudo mv /System/Library/Caches/com.apple.desktop.admin.png /System/Library/Caches/com.apple.desktop.admin.png.bak
+  sudo cp ./eml_desktop.png /System/Library/Caches/
+  sudo mv /System/Library/Caches/eml_desktop.png /System/Library/Caches/com.apple.desktop.admin.png
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
-  "Welcome to the English Media Lab. Login information is available on the white board or \
+  "Welcome to the Department of English, Film, and Theatre Media Lab. Login information is available on the white board or \
   from the EML Technician. By logging in you agree to abide by the Lab Computer Guidelines. \
   Please ask the EML Technician for any assistance."
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
@@ -278,7 +282,7 @@ configure_login_window() {
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow com.apple.login.mcx.DisableAutoLoginClient True
   #set loginwindow to use screensaver we just installed
   sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowIdleTime 15
-  sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowModulePath "/System/Library/Screen Savers/Arabesque.qtz"
+  # sudo defaults write /Library/Preferences/com.apple.screensaver loginWindowModulePath "/System/Library/Screen Savers/Arabesque.qtz"
   #set PolicyBanner
   sudo cp -R ./PolicyBanner.rtfd /Library/Security/
   sudo chmod -R o+rw /Library/Security/PolicyBanner.rtfd
