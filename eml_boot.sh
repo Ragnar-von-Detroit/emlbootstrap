@@ -269,10 +269,10 @@ create_users() {
   #Staff GroupID is almost certainly 20 but why guess?
   local -ir staffgid=$(/usr/bin/dscl . -read /Groups/staff PrimaryGroupID | cut -d " " -f 2)
   #Array of EML default users (besides EML Admin)
-  local -ar defusers=("Student" "Filmtech" "Instructor")
+  local -ar defusers=("Student" "Instructor")
   #DON'T escape spaces in paths for dscl!
-  #Admin picture is Whiterose.tif, student is Tennis.png, Filmtech is Golf.png, Instructor is 8ball.png
-  local -ar userpictures=("/Library/User Pictures/Sports/Tennis.png" "/Library/User Pictures/Sports/Golf.png" "/Library/User Pictures/Sports/8ball.png")
+  #Admin picture is Whiterose.tif, student is Tennis.png, Filmtech is Golf.png, Instructor is 8ball.png. No more film
+  local -ar userpictures=("/Library/User Pictures/Sports/Tennis.png" "/Library/User Pictures/Sports/Golf.png")
 
   #createuser wants $1 USERNAME, $2 UNIQUEID, $3 USERPICTURE
   create_user() {
@@ -325,9 +325,9 @@ create_users() {
   done
 
   #add all users to ssh
-  dseditgroup -o create -q com.apple.access_ssh
-  dseditgroup -o edit -a admin -t group com.apple.access_ssh
-  dseditgroup -o edit -a staff -t group com.apple.access_ssh
+  sudo dseditgroup -o create -q com.apple.access_ssh
+  sudo dseditgroup -o edit -a admin -t group com.apple.access_ssh
+  sudo dseditgroup -o edit -a staff -t group com.apple.access_ssh
 }
 
 main() {
