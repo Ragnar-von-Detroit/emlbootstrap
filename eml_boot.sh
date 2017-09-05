@@ -300,10 +300,10 @@ create_users() {
       sudo chmod 600 $userpath/.ssh/authorized_keys
     fi
     #check if key in file, once made or found above
-    if grep -q "$publickey" $userpath/.ssh/authorized_keys ; then
+    if sudo grep -q "$publickey" $userpath/.ssh/authorized_keys ; then
       style_text warn "Public key is already installed in user dir. Skipping."
     else
-      echo "$publickey" >> $userpath/.ssh/authorized_keys
+      echo "$publickey" | tee -a $userpath/.ssh/authorized_keys 2>&1
     fi
     sudo chown -R "$1":staff "$userpath"
     style_text explain "Finished creating account "\"$1\"" at "\"$userpath\""."
