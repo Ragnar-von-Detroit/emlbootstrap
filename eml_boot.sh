@@ -291,12 +291,12 @@ create_users() {
     sudo mkdir "$userpath"
     style_text explain "Creating ~/ at "\"$userpath\""."
     sudo cp -R /System/Library/User\ Template/English.lproj/ "$userpath"
-    userpublickey=
+
     if [ ! -d $userpath/.ssh ]; then
       sudo mkdir $userpath/.ssh
     fi
     if [ ! -f $userpath/.ssh/authorized_keys ]; then
-      sudo touch $userpath.ssh/authorized_keys
+      sudo touch $userpath/.ssh/authorized_keys
       sudo chmod 600 $userpath/.ssh/authorized_keys
     fi
     #check if key in file, once made or found above
