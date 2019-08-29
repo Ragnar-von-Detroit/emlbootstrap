@@ -88,11 +88,11 @@ install_homebrew_and_cask() {
 
   check_cask_options() {
     style_text explain "Making /Applications the app directory for brew cask."
-    if grep -q "$cask_appdir" /etc/bashrc ; then
-      style_text error "Cask options are already in /etc/bashrc. Skipping."
+    if grep -q "$cask_appdir" ~/.bash_profile ; then
+      style_text error "Cask options are already in ~/.bash_profile. Skipping."
     else
       style_text explain "Changing default Cask symlink location to /Applications in /etc/bashrc"
-      echo "$cask_appdir" | sudo tee -a /etc/bashrc
+      echo "$cask_appdir" | tee -a ~/.bash_profile
     fi
   }
 
@@ -109,8 +109,8 @@ install_homebrew_and_cask() {
   type brew >/dev/null 2>&1
   brew_installed=$?
   if [[ "$brew_installed" -eq 0 ]]; then
-    style_text explain "Installing Cask."
-    brew tap caskroom/cask
+#     style_text explain "Installing Cask."
+#     brew tap caskroom/cask
     check_cask_options
   else
     style_text error "Homebrew isn't installed. Something must have gone wrong." && exit 1
