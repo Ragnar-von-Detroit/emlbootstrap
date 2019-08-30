@@ -250,7 +250,7 @@ configure_login_window() {
   sudo cp ./eml_desktop.png /Library/Caches/
   sudo mv /Library/Caches/eml_desktop.png /Library/Caches/com.apple.desktop.admin.png
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText \
-  "Welcome to the Department of English, Film, and Theatre Media Lab. This is computer $thisCompName. Login information is available on the white board or \
+  "Welcome to the Department of English, Theatre, Film & Media Lab. This is computer $thisCompName. Login information is available on the white board or \
   from the EML Technician. By logging in you agree to abide by the Lab Computer Guidelines. \
   Please ask the EML Technician for any assistance."
   sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME False
